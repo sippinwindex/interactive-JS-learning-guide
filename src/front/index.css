@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles using Tailwind's @layer directive */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-gradient-to-br from-matcha-50 via-wood-50 to-matcha-100 text-gray-900;
+  }
+  .dark body {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100;
+  }
+}
+
+@layer components {
+  /* Button components */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply bg-matcha-500 text-white hover:bg-matcha-600 focus:ring-matcha-500;
+  }
+  
+  .btn-secondary {
+    @apply bg-wood-500 text-white hover:bg-wood-600 focus:ring-wood-500;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-current bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+  
+  /* Card component */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700;
+  }
+  
+  /* Glass effect */
+  .glass {
+    @apply bg-white/30 dark:bg-gray-900/30 backdrop-blur-md border border-white/20 dark:border-gray-700/30;
+  }
+}
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-matcha-400 to-wood-500;
+  }
+}

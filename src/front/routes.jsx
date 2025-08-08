@@ -1,5 +1,4 @@
-// Import necessary components and functions from react-router-dom.
-
+// src/front/routes.jsx
 import {
     createBrowserRouter,
     createRoutesFromElements,
@@ -7,24 +6,40 @@ import {
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
-import { Single } from "./pages/Single";
-import { Demo } from "./pages/Demo";
+import { Documentation } from "./pages/Documentation";
+import { Playground } from "./pages/Playground";
+import { Challenges } from "./pages/Challenges";
+import { Guide } from "./pages/Guide";
+import { ChallengeDetail } from "./pages/ChallengeDetail";
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
-
-      // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
-      </Route>
+        <Route path="/" element={<Layout />} errorElement={<ErrorPage />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/documentation" element={<Documentation />} />
+            <Route path="/playground" element={<Playground />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/challenges/:challengeId" element={<ChallengeDetail />} />
+            <Route path="/guide" element={<Guide />} />
+        </Route>
     )
 );
+
+// Error Page Component
+function ErrorPage() {
+    return (
+        <div className="min-vh-100 d-flex align-items-center justify-content-center">
+            <div className="text-center">
+                <h1 className="display-1 fw-bold text-danger">404</h1>
+                <h2 className="mb-4">Page Not Found</h2>
+                <p className="text-muted mb-4">
+                    The page you're looking for doesn't exist or has been moved.
+                </p>
+                <a href="/" className="btn btn-primary">
+                    <i className="bi bi-house me-2"></i>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    );
+}
