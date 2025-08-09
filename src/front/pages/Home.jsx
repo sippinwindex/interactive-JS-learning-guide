@@ -17,6 +17,12 @@ export const Home = () => {
         if (savedStats) {
             setStats(JSON.parse(savedStats));
         }
+
+        // For frontend-only mode, set a demo message
+        dispatch({ 
+            type: "set_hello", 
+            payload: "Welcome to the JavaScript Learning Platform! (Frontend-only demo mode)" 
+        });
     }, []);
 
     const features = [
@@ -85,6 +91,14 @@ export const Home = () => {
                                 </Link>
                             </div>
 
+                            {/* Demo Mode Notice */}
+                            <div className="mt-4 p-3 bg-white/20 rounded-lg">
+                                <small className="text-white">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    Frontend Demo Mode - All features work client-side!
+                                </small>
+                            </div>
+
                             {/* Quick Stats */}
                             <div className="row mt-5">
                                 <div className="col-4">
@@ -148,6 +162,16 @@ skills.forEach(skill => {
                             </div>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            {/* Backend Status */}
+            <section className="py-3 bg-info text-white">
+                <div className="container text-center">
+                    <small>
+                        <i className="bi bi-info-circle me-2"></i>
+                        Status: {store.message || "Frontend-only demo mode - All learning features available!"}
+                    </small>
                 </div>
             </section>
 
