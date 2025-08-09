@@ -5,7 +5,7 @@
 /* Custom styles using Tailwind's @layer directive */
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
   body {
     @apply bg-gradient-to-br from-matcha-50 via-wood-50 to-matcha-100 text-gray-900;
@@ -42,11 +42,21 @@
   .glass {
     @apply bg-white/30 dark:bg-gray-900/30 backdrop-blur-md border border-white/20 dark:border-gray-700/30;
   }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl;
+  }
 }
 
 @layer utilities {
   /* Text gradient */
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-matcha-400 to-wood-500;
+  }
+  
+  /* Custom cursor */
+  .cursor-pointer {
+    cursor: pointer;
   }
 }
