@@ -1,13 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import App from './App'
+import SimpleRouter from './routes'  // Use the updated routes.jsx
 import { StoreProvider } from './hooks/useGlobalReducer'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <StoreProvider>
-      <App />
+      <SimpleRouter />
     </StoreProvider>
   </React.StrictMode>
 )
