@@ -40,6 +40,7 @@ module.exports = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in',
         'slide-in': 'slideIn 0.3s ease-out',
+        'glow': 'glow 2s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -49,7 +50,14 @@ module.exports = {
         slideIn: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
+        },
+        glow: {
+          '0%': { textShadow: '0 0 10px #fff' },
+          '100%': { textShadow: '0 0 20px #fff, 0 0 30px #667eea' },
         }
+      },
+      fontFamily: {
+        'mono': ['Fira Code', 'Monaco', 'Menlo', 'monospace'],
       },
     },
   },

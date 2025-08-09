@@ -7,9 +7,16 @@
   * {
     @apply border-gray-200;
   }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-gradient-to-br from-matcha-50 via-wood-50 to-matcha-100 text-gray-900;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
+  
   .dark body {
     @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100;
   }
@@ -47,6 +54,12 @@
   .hover-lift {
     @apply transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl;
   }
+  
+  /* Code editor styles */
+  .code-editor {
+    font-family: 'Fira Code', 'Monaco', 'Menlo', monospace;
+    font-variant-ligatures: common-ligatures;
+  }
 }
 
 @layer utilities {
@@ -55,8 +68,29 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-matcha-400 to-wood-500;
   }
   
-  /* Custom cursor */
-  .cursor-pointer {
-    cursor: pointer;
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-gray-500;
+  }
+  
+  /* Selection color */
+  ::selection {
+    @apply bg-matcha-200 text-matcha-900;
+  }
+  
+  .dark ::selection {
+    @apply bg-matcha-700 text-matcha-100;
   }
 }
