@@ -1,124 +1,40 @@
-// src/front/pages/Home.jsx
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import React from 'react';
 
-export const Home = () => {
-    const { store, dispatch } = useGlobalReducer();
-    const [stats, setStats] = useState({
-        lessonsCompleted: 0,
-        challengesSolved: 0,
-        hoursLearned: 0
-    });
-
-    useEffect(() => {
-        // Load user stats from localStorage or backend
-        const savedStats = localStorage.getItem('userStats');
-        if (savedStats) {
-            setStats(JSON.parse(savedStats));
-        }
-
-        // For frontend-only mode, set a demo message
-        dispatch({ 
-            type: "set_hello", 
-            payload: "Welcome to the JavaScript Learning Platform! (Frontend-only demo mode)" 
-        });
-    }, []);
-
-    const features = [
-        {
-            icon: "bi-book",
-            title: "Interactive Documentation",
-            description: "Learn JavaScript with live code examples and instant feedback",
-            link: "/documentation",
-            color: "text-blue-600"
-        },
-        {
-            icon: "bi-code-square",
-            title: "Live Playground",
-            description: "Write HTML, CSS, and JavaScript with real-time preview",
-            link: "/playground",
-            color: "text-green-600"
-        },
-        {
-            icon: "bi-trophy",
-            title: "Coding Challenges",
-            description: "Test your skills with progressive challenges and earn badges",
-            link: "/challenges",
-            color: "text-purple-600"
-        },
-        {
-            icon: "bi-compass",
-            title: "Learning Guide",
-            description: "Structured path from beginner to advanced JavaScript",
-            link: "/guide",
-            color: "text-orange-600"
-        }
-    ];
-
-    const topics = [
-        "Variables & Types", "Functions", "Arrays", "Objects",
-        "DOM Manipulation", "Async/Await", "ES6+", "APIs"
-    ];
-
-    return (
-        <div className="min-vh-100">
-            {/* Hero Section */}
-            <section className="hero-section position-relative overflow-hidden" style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                paddingTop: '120px',
-                paddingBottom: '80px'
-            }}>
-                <div className="container">
-                    <div className="row align-items-center">
-                        <div className="col-lg-6">
-                            <h1 className="display-4 fw-bold text-white mb-4">
-                                Master JavaScript
-                                <span className="d-block text-warning">Interactively</span>
-                            </h1>
-                            <p className="lead text-white-50 mb-4">
-                                Learn JavaScript through hands-on coding, real-time feedback, 
-                                and progressive challenges. Built for developers, by developers.
-                            </p>
-                            <div className="d-flex gap-3 flex-wrap">
-                                <Link to="/documentation" className="btn btn-warning btn-lg px-4">
-                                    <i className="bi bi-play-fill me-2"></i>
-                                    Start Learning
-                                </Link>
-                                <Link to="/playground" className="btn btn-outline-light btn-lg px-4">
-                                    <i className="bi bi-code me-2"></i>
-                                    Try Playground
-                                </Link>
-                            </div>
-
-                            {/* Demo Mode Notice */}
-                            <div className="mt-4 p-3 bg-white/20 rounded-lg">
-                                <small className="text-white">
-                                    <i className="bi bi-info-circle me-2"></i>
-                                    Frontend Demo Mode - All features work client-side!
-                                </small>
-                            </div>
-
-                            {/* Quick Stats */}
-                            <div className="row mt-5">
-                                <div className="col-4">
-                                    <h3 className="text-white mb-0">{stats.lessonsCompleted}</h3>
-                                    <small className="text-white-50">Lessons</small>
-                                </div>
-                                <div className="col-4">
-                                    <h3 className="text-white mb-0">{stats.challengesSolved}</h3>
-                                    <small className="text-white-50">Challenges</small>
-                                </div>
-                                <div className="col-4">
-                                    <h3 className="text-white mb-0">{stats.hoursLearned}h</h3>
-                                    <small className="text-white-50">Learning</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-6">
-                            <div className="code-animation p-4 bg-dark rounded-3 shadow-lg">
-                                <pre className="text-white mb-0">
-                                    <code>{`// Welcome to JS Master
+export const HomePage = ({ navigateTo }) => {
+  return (
+    <div className="min-h-screen pt-16">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-5xl font-bold mb-6">
+                Master JavaScript
+                <span className="block text-yellow-400">Interactively</span>
+              </h1>
+              <p className="text-xl mb-8 text-blue-100">
+                Learn JavaScript through hands-on coding, real-time feedback, 
+                and progressive challenges. Built for developers, by developers.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  onClick={() => navigateTo('documentation')}
+                  className="px-8 py-3 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
+                >
+                  🚀 Start Learning
+                </button>
+                <button 
+                  onClick={() => navigateTo('playground')}
+                  className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
+                >
+                  💻 Try Playground
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-xl shadow-2xl">
+              <pre className="text-green-400">
+                <code>{`// Welcome to JS Master
 const skills = ['JavaScript', 'React', 'Node.js'];
 
 skills.forEach(skill => {
@@ -126,84 +42,108 @@ skills.forEach(skill => {
 });
 
 // Start your journey today! 🚀`}</code>
-                                </pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Animated Background Elements */}
-                <div className="position-absolute top-0 start-0 w-100 h-100" style={{ 
-                    opacity: 0.1,
-                    pointerEvents: 'none' 
-                }}>
-                    <div className="floating-element"></div>
-                </div>
-            </section>
-
-            {/* Features Section */}
-            <section className="py-5 bg-light">
-                <div className="container">
-                    <h2 className="text-center mb-5">Everything You Need to Master JavaScript</h2>
-                    <div className="row g-4">
-                        {features.map((feature, index) => (
-                            <div key={index} className="col-md-6 col-lg-3">
-                                <Link to={feature.link} className="text-decoration-none">
-                                    <div className="card h-100 border-0 shadow-sm hover-lift">
-                                        <div className="card-body text-center">
-                                            <div className={`${feature.color} mb-3`}>
-                                                <i className={`bi ${feature.icon}`} style={{ fontSize: '3rem' }}></i>
-                                            </div>
-                                            <h5 className="card-title">{feature.title}</h5>
-                                            <p className="card-text text-muted">{feature.description}</p>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Backend Status */}
-            <section className="py-3 bg-info text-white">
-                <div className="container text-center">
-                    <small>
-                        <i className="bi bi-info-circle me-2"></i>
-                        Status: {store.message || "Frontend-only demo mode - All learning features available!"}
-                    </small>
-                </div>
-            </section>
-
-            {/* Topics Section */}
-            <section className="py-5">
-                <div className="container">
-                    <h2 className="text-center mb-4">What You'll Learn</h2>
-                    <div className="d-flex flex-wrap justify-content-center gap-3">
-                        {topics.map((topic, index) => (
-                            <span key={index} className="badge bg-gradient text-white px-3 py-2" style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                fontSize: '1rem'
-                            }}>
-                                {topic}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="py-5 bg-gradient text-white" style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-            }}>
-                <div className="container text-center">
-                    <h2 className="mb-4">Ready to Start Your JavaScript Journey?</h2>
-                    <p className="lead mb-4">Join thousands of developers learning JavaScript the interactive way</p>
-                    <Link to="/documentation" className="btn btn-warning btn-lg px-5">
-                        Get Started Free
-                    </Link>
-                </div>
-            </section>
+              </pre>
+            </div>
+          </div>
         </div>
-    );
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white">
+            Everything You Need to Master JavaScript
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                title: 'Interactive Documentation',
+                description: 'Learn JavaScript with live code examples and instant feedback',
+                icon: '📚',
+                page: 'documentation',
+                color: 'text-blue-600'
+              },
+              {
+                title: 'Live Playground',
+                description: 'Write HTML, CSS, and JavaScript with real-time preview',
+                icon: '🎮',
+                page: 'playground',
+                color: 'text-green-600'
+              },
+              {
+                title: 'Coding Challenges',
+                description: 'Test your skills with progressive challenges and earn badges',
+                icon: '🏆',
+                page: 'challenges',
+                color: 'text-purple-600'
+              },
+              {
+                title: 'Learning Guide',
+                description: 'Structured path from beginner to advanced JavaScript',
+                icon: '🧭',
+                page: 'guide',
+                color: 'text-orange-600'
+              }
+            ].map((feature, index) => (
+              <button 
+                key={index} 
+                onClick={() => navigateTo(feature.page)}
+                className="group"
+              >
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                  <div className={`text-4xl mb-4 ${feature.color}`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {feature.description}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Topics Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white">
+            What You'll Learn
+          </h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              'Variables & Types', 'Functions', 'Arrays', 'Objects',
+              'DOM Manipulation', 'Async/Await', 'ES6+', 'APIs'
+            ].map((topic, index) => (
+              <span key={index} className="badge bg-gradient text-white px-4 py-2 rounded-full" style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                fontSize: '1rem'
+              }}>
+                {topic}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-green-600 to-blue-600 text-white">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-4xl font-bold mb-6">Ready to Start Your JavaScript Journey?</h2>
+          <p className="text-xl mb-8 text-green-100">
+            Join thousands of developers learning JavaScript the interactive way
+          </p>
+          <button 
+            onClick={() => navigateTo('documentation')}
+            className="inline-block px-8 py-4 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors text-lg"
+          >
+            Get Started Free 🚀
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 };

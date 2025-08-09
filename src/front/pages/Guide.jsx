@@ -1,1285 +1,754 @@
-// src/front/pages/Guide.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import useGlobalReducer from '../hooks/useGlobalReducer';
 
-export const Guide = () => {
-    const { store, dispatch } = useGlobalReducer();
-    const navigate = useNavigate();
-    const [activeModule, setActiveModule] = useState('beginner');
-    const [completedLessons, setCompletedLessons] = useState([]);
-    const [currentLesson, setCurrentLesson] = useState(null);
-    const [expandedModules, setExpandedModules] = useState(['beginner']);
-    const [userNotes, setUserNotes] = useState({});
-    const [showCertificate, setShowCertificate] = useState(false);
+export const Guide = ({ navigateTo }) => {
+  const [activeModule, setActiveModule] = useState('beginner');
+  const [completedLessons, setCompletedLessons] = useState([]);
+  const [currentLesson, setCurrentLesson] = useState(null);
 
-    // Learning Path Structure
-    const learningPath = {
-        beginner: {
-            title: 'Beginner Path',
-            icon: 'bi-star',
-            color: 'success',
-            description: 'Start your JavaScript journey from scratch',
-            estimatedTime: '2-3 weeks',
-            modules: [
-                {
-                    id: 'intro',
-                    title: 'Introduction to Programming',
-                    lessons: [
-                        {
-                            id: 'what-is-js',
-                            title: 'What is JavaScript?',
-                            duration: '15 min',
-                            type: 'reading',
-                            content: {
-                                overview: 'JavaScript is a programming language that powers the web. It runs in your browser and makes websites interactive.',
-                                keyPoints: [
-                                    'Created in 1995 by Brendan Eich',
-                                    'Originally called LiveScript',
-                                    'Not related to Java despite the name',
-                                    'Most popular programming language in the world'
-                                ],
-                                example: `// Your first JavaScript code
+  // Load progress from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('completedLessons');
+    if (saved) {
+      setCompletedLessons(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save progress to localStorage
+  useEffect(() => {
+    localStorage.setItem('completedLessons', JSON.stringify(completedLessons));
+  }, [completedLessons]);
+
+  const learningPath = {
+    beginner: {
+      title: 'Beginner Path',
+      icon: '🌱',
+      description: 'Start your JavaScript journey from scratch',
+      estimatedTime: '2-3 weeks',
+      lessons: [
+        {
+          id: 'intro',
+          title: 'What is JavaScript?',
+          duration: '15 min',
+          content: {
+            overview: 'JavaScript is a programming language that powers the web. It runs in your browser and makes websites interactive.',
+            keyPoints: [
+              'Created in 1995 by Brendan Eich',
+              'Most popular programming language in the world',
+              'Runs in browsers and servers (Node.js)',
+              'Used for web development, mobile apps, and more'
+            ],
+            example: `// Your first JavaScript code
 console.log("Hello, World!");
-alert("Welcome to JavaScript!");
 
-// JavaScript can manipulate web pages
-document.body.style.backgroundColor = "lightblue";`,
-                                quiz: [
-                                    {
-                                        question: 'When was JavaScript created?',
-                                        options: ['1990', '1995', '2000', '2005'],
-                                        correct: 1
-                                    },
-                                    {
-                                        question: 'JavaScript runs primarily in...',
-                                        options: ['Database', 'Browser', 'Server only', 'Mobile only'],
-                                        correct: 1
-                                    }
-                                ],
-                                resources: [
-                                    { title: 'MDN JavaScript Guide', url: '#' },
-                                    { title: 'JavaScript History', url: '#' }
-                                ]
-                            }
-                        },
-                        {
-                            id: 'setup',
-                            title: 'Setting Up Your Environment',
-                            duration: '20 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Learn how to set up your development environment for JavaScript programming.',
-                                keyPoints: [
-                                    'Choose a text editor (VS Code recommended)',
-                                    'Use browser developer tools',
-                                    'Set up a local development server',
-                                    'Organize your project files'
-                                ],
-                                example: `// Create an index.html file
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My First JS App</title>
-</head>
-<body>
-    <h1>Hello JavaScript!</h1>
-    <script src="script.js"></script>
-</body>
-</html>
+// Variables
+let message = "JavaScript is awesome!";
+console.log(message);
 
-// Create a script.js file
-console.log("JavaScript is running!");`,
-                                tasks: [
-                                    'Install VS Code',
-                                    'Create your first HTML file',
-                                    'Link a JavaScript file',
-                                    'Open browser console'
-                                ]
-                            }
-                        },
-                        {
-                            id: 'first-program',
-                            title: 'Your First Program',
-                            duration: '30 min',
-                            type: 'hands-on',
-                            content: {
-                                overview: 'Write your first interactive JavaScript program.',
-                                project: 'Build a simple greeting program',
-                                starter: `// Get user's name
-const userName = prompt("What's your name?");
+// Functions
+function greet(name) {
+    return "Hello, " + name + "!";
+}
 
-// Create a greeting
-const greeting = "Hello, " + userName + "!";
-
-// Display the greeting
-alert(greeting);
-console.log(greeting);
-
-// CHALLENGE: Add the current time to the greeting`,
-                                challengeLink: '/playground'
-                            }
-                        }
-                    ]
-                },
-                {
-                    id: 'basics',
-                    title: 'JavaScript Basics',
-                    lessons: [
-                        {
-                            id: 'variables',
-                            title: 'Variables and Data Types',
-                            duration: '25 min',
-                            type: 'reading',
-                            content: {
-                                overview: 'Learn how to store and manipulate data in JavaScript.',
-                                keyPoints: [
-                                    'let, const, and var keywords',
-                                    'Primitive data types',
-                                    'Type conversion',
-                                    'Variable naming rules'
-                                ],
-                                example: `// Declaring variables
+console.log(greet("Developer"));`
+          }
+        },
+        {
+          id: 'variables',
+          title: 'Variables and Data Types',
+          duration: '25 min',
+          content: {
+            overview: 'Learn how to store and manipulate data in JavaScript.',
+            keyPoints: [
+              'let, const, and var keywords',
+              'Primitive data types (string, number, boolean)',
+              'Type conversion and checking',
+              'Variable naming conventions'
+            ],
+            example: `// Variable declarations
 let age = 25;              // Number
-const name = "Alice";      // String
+const name = "Alice";      // String (immutable)
 let isStudent = true;      // Boolean
-let empty = null;          // Null
-let notDefined;            // Undefined
+
+// Type checking
+console.log(typeof age);    // "number"
+console.log(typeof name);   // "string"
 
 // Type conversion
 let strNumber = "42";
 let number = Number(strNumber);  // Convert to number
 let str = String(123);           // Convert to string
 
-// Template literals
-const message = \`Hello, \${name}! You are \${age} years old.\`;`,
-                                practice: {
-                                    title: 'Variable Practice',
-                                    task: 'Create variables for a user profile',
-                                    link: '/challenges'
-                                }
-                            }
-                        },
-                        {
-                            id: 'operators',
-                            title: 'Operators and Expressions',
-                            duration: '20 min',
-                            type: 'reading',
-                            content: {
-                                overview: 'Master JavaScript operators for calculations and comparisons.',
-                                keyPoints: [
-                                    'Arithmetic operators (+, -, *, /, %)',
-                                    'Comparison operators (==, ===, !=, !==)',
-                                    'Logical operators (&&, ||, !)',
-                                    'Assignment operators (=, +=, -=)'
-                                ],
-                                example: `// Arithmetic
-let sum = 10 + 5;         // 15
-let product = 4 * 3;      // 12
-let remainder = 10 % 3;   // 1
+// Template literals (ES6)
+const message = \`Hello, \${name}! You are \${age} years old.\`;
+console.log(message);`
+          }
+        },
+        {
+          id: 'control-flow',
+          title: 'Control Flow',
+          duration: '30 min',
+          content: {
+            overview: 'Control the flow of your program with conditions and loops.',
+            keyPoints: [
+              'if/else statements and conditions',
+              'Comparison and logical operators',
+              'for and while loops',
+              'Break and continue statements'
+            ],
+            example: `// Conditional statements
+let score = 85;
+let grade;
 
-// Comparison
-console.log(5 == "5");    // true (loose equality)
-console.log(5 === "5");   // false (strict equality)
-
-// Logical
-let canVote = age >= 18 && isCitizen;
-let hasAccess = isAdmin || isOwner;
-
-// Ternary operator
-let status = age >= 18 ? "Adult" : "Minor";`
-                            }
-                        },
-                        {
-                            id: 'control-flow',
-                            title: 'Control Flow',
-                            duration: '35 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Control the flow of your program with conditions and loops.',
-                                keyPoints: [
-                                    'if/else statements',
-                                    'switch statements',
-                                    'for loops',
-                                    'while loops'
-                                ],
-                                example: `// If/else statement
 if (score >= 90) {
     grade = 'A';
 } else if (score >= 80) {
     grade = 'B';
-} else {
+} else if (score >= 70) {
     grade = 'C';
+} else {
+    grade = 'F';
 }
 
-// Switch statement
-switch (day) {
-    case 'Monday':
-        console.log('Start of the week');
-        break;
-    case 'Friday':
-        console.log('TGIF!');
-        break;
-    default:
-        console.log('Regular day');
-}
+console.log(\`Score: \${score}, Grade: \${grade}\`);
 
-// For loop
-for (let i = 0; i < 5; i++) {
+// Loops
+console.log("Counting with for loop:");
+for (let i = 1; i <= 5; i++) {
     console.log(\`Count: \${i}\`);
 }
 
-// While loop
-let count = 0;
-while (count < 3) {
-    console.log(\`While: \${count}\`);
-    count++;
-}`
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        intermediate: {
-            title: 'Intermediate Path',
-            icon: 'bi-graph-up',
-            color: 'primary',
-            description: 'Level up your JavaScript skills',
-            estimatedTime: '3-4 weeks',
-            modules: [
-                {
-                    id: 'functions-deep',
-                    title: 'Functions in Depth',
-                    lessons: [
-                        {
-                            id: 'function-basics',
-                            title: 'Function Fundamentals',
-                            duration: '30 min',
-                            type: 'reading',
-                            content: {
-                                overview: 'Master different ways to create and use functions.',
-                                keyPoints: [
-                                    'Function declarations vs expressions',
-                                    'Arrow functions',
-                                    'Parameters and arguments',
-                                    'Return values'
-                                ],
-                                example: `// Function declaration
-function greet(name) {
+// Array iteration
+const fruits = ['apple', 'banana', 'orange'];
+fruits.forEach(fruit => {
+    console.log(\`I like \${fruit}\`);
+});`
+          }
+        }
+      ]
+    },
+    intermediate: {
+      title: 'Intermediate Path',
+      icon: '📚',
+      description: 'Level up your JavaScript skills',
+      estimatedTime: '3-4 weeks',
+      lessons: [
+        {
+          id: 'functions',
+          title: 'Functions Deep Dive',
+          duration: '30 min',
+          content: {
+            overview: 'Master different ways to create and use functions in JavaScript.',
+            keyPoints: [
+              'Function declarations vs expressions',
+              'Arrow functions and their benefits',
+              'Parameters, default values, and rest parameters',
+              'Scope, closures, and the this keyword'
+            ],
+            example: `// Different function types
+function declaration(name) {
     return \`Hello, \${name}!\`;
 }
 
-// Function expression
-const add = function(a, b) {
+const expression = function(a, b) {
     return a + b;
 };
 
-// Arrow function
-const multiply = (a, b) => a * b;
-
-// Arrow with body
-const divide = (a, b) => {
-    if (b === 0) throw new Error("Cannot divide by zero");
-    return a / b;
-};
+const arrow = (x, y) => x * y;
 
 // Default parameters
-function power(base, exponent = 2) {
-    return Math.pow(base, exponent);
+function greet(name = "World") {
+    return \`Hello, \${name}!\`;
 }
 
 // Rest parameters
 function sum(...numbers) {
-    return numbers.reduce((total, n) => total + n, 0);
-}`
-                            }
-                        },
-                        {
-                            id: 'scope-closure',
-                            title: 'Scope and Closures',
-                            duration: '40 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Understand scope, closures, and the execution context.',
-                                keyPoints: [
-                                    'Global vs local scope',
-                                    'Block scope',
-                                    'Lexical scope',
-                                    'Closures'
-                                ],
-                                example: `// Scope example
-let globalVar = "I'm global";
-
-function outerFunction() {
-    let outerVar = "I'm in outer";
-    
-    function innerFunction() {
-        let innerVar = "I'm in inner";
-        console.log(globalVar);  // Accessible
-        console.log(outerVar);   // Accessible
-        console.log(innerVar);   // Accessible
-    }
-    
-    innerFunction();
-    // console.log(innerVar);  // Error: not accessible
+    return numbers.reduce((total, num) => total + num, 0);
 }
 
-// Closure example
-function createCounter() {
-    let count = 0;
-    
-    return function() {
-        count++;
-        return count;
+console.log(sum(1, 2, 3, 4, 5)); // 15
+
+// Higher-order function
+function createMultiplier(factor) {
+    return function(number) {
+        return number * factor;
     };
 }
 
-const counter = createCounter();
-console.log(counter()); // 1
-console.log(counter()); // 2`
-                            }
-                        }
-                    ]
-                },
-                {
-                    id: 'arrays-objects',
-                    title: 'Arrays and Objects',
-                    lessons: [
-                        {
-                            id: 'array-methods',
-                            title: 'Array Methods Mastery',
-                            duration: '45 min',
-                            type: 'hands-on',
-                            content: {
-                                overview: 'Master array manipulation with built-in methods.',
-                                keyPoints: [
-                                    'map, filter, reduce',
-                                    'find, findIndex',
-                                    'some, every',
-                                    'sort, reverse'
-                                ],
-                                example: `const users = [
-    { id: 1, name: 'Alice', age: 28, active: true },
-    { id: 2, name: 'Bob', age: 32, active: false },
-    { id: 3, name: 'Charlie', age: 25, active: true }
-];
+const double = createMultiplier(2);
+console.log(double(5)); // 10`
+          }
+        },
+        {
+          id: 'arrays-objects',
+          title: 'Arrays and Objects',
+          duration: '35 min',
+          content: {
+            overview: 'Work with complex data structures and their methods.',
+            keyPoints: [
+              'Array methods: map, filter, reduce, find',
+              'Object creation and manipulation',
+              'Destructuring assignment',
+              'Spread and rest operators'
+            ],
+            example: `// Array methods
+const numbers = [1, 2, 3, 4, 5, 6];
 
-// Map - transform each element
-const names = users.map(user => user.name);
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((acc, n) => acc + n, 0);
 
-// Filter - keep matching elements
-const activeUsers = users.filter(user => user.active);
+console.log('Doubled:', doubled);
+console.log('Evens:', evens);
+console.log('Sum:', sum);
 
-// Reduce - combine into single value
-const totalAge = users.reduce((sum, user) => sum + user.age, 0);
-
-// Find - get first match
-const user = users.find(u => u.id === 2);
-
-// Some/Every - test conditions
-const hasYoungUsers = users.some(u => u.age < 30);
-const allActive = users.every(u => u.active);
-
-// Chaining methods
-const result = users
-    .filter(u => u.active)
-    .map(u => u.name)
-    .sort();`
-                            }
-                        },
-                        {
-                            id: 'object-methods',
-                            title: 'Working with Objects',
-                            duration: '35 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Advanced object manipulation techniques.',
-                                keyPoints: [
-                                    'Object methods',
-                                    'Destructuring',
-                                    'Spread operator',
-                                    'Object.keys/values/entries'
-                                ],
-                                example: `// Object destructuring
-const { name, age, city = 'Unknown' } = user;
-
-// Nested destructuring
-const { address: { street, zip } } = user;
-
-// Spread operator
-const updatedUser = { ...user, age: 30, status: 'active' };
-
-// Object methods
-const keys = Object.keys(user);
-const values = Object.values(user);
-const entries = Object.entries(user);
-
-// Dynamic property names
-const prop = 'score';
-const obj = {
-    [prop]: 100,
-    [\`max\${prop.charAt(0).toUpperCase()}\${prop.slice(1)}\`]: 150
+// Objects
+const person = {
+    name: 'John',
+    age: 30,
+    hobbies: ['reading', 'gaming'],
+    greet() {
+        return \`Hi, I'm \${this.name}\`;
+    }
 };
 
-// Object.assign
-const merged = Object.assign({}, obj1, obj2);
+// Destructuring
+const { name, age, hobbies } = person;
+const [hobby1, hobby2] = hobbies;
 
-// Property shorthand
-const x = 10, y = 20;
-const point = { x, y };  // Same as { x: x, y: y }`
-                            }
-                        }
-                    ]
-                },
-                {
-                    id: 'dom',
-                    title: 'DOM Manipulation',
-                    lessons: [
-                        {
-                            id: 'dom-basics',
-                            title: 'DOM Fundamentals',
-                            duration: '40 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Learn to manipulate web pages with JavaScript.',
-                                keyPoints: [
-                                    'Selecting elements',
-                                    'Modifying content and styles',
-                                    'Creating elements',
-                                    'Event handling'
-                                ],
-                                example: `// Selecting elements
-const element = document.getElementById('myId');
-const elements = document.getElementsByClassName('myClass');
-const first = document.querySelector('.class');
-const all = document.querySelectorAll('div');
+// Spread operator
+const updatedPerson = {
+    ...person,
+    age: 31,
+    city: 'New York'
+};
 
-// Modifying content
-element.textContent = 'New text';
-element.innerHTML = '<strong>Bold text</strong>';
+console.log(person.greet());
+console.log(updatedPerson);`
+          }
+        },
+        {
+          id: 'dom-events',
+          title: 'DOM and Events',
+          duration: '40 min',
+          content: {
+            overview: 'Learn to manipulate web pages and handle user interactions.',
+            keyPoints: [
+              'Selecting and modifying DOM elements',
+              'Event listeners and event handling',
+              'Creating and removing elements',
+              'Form handling and validation'
+            ],
+            example: `// DOM Selection
+const button = document.getElementById('myButton');
+const output = document.querySelector('.output');
 
-// Modifying styles
-element.style.color = 'blue';
-element.style.backgroundColor = '#f0f0f0';
-element.classList.add('active');
-element.classList.remove('inactive');
-element.classList.toggle('visible');
+// Event handling
+button.addEventListener('click', function(event) {
+    output.textContent = 'Button was clicked!';
+    output.style.color = 'green';
+    
+    // Prevent default behavior if needed
+    event.preventDefault();
+});
 
 // Creating elements
-const newDiv = document.createElement('div');
-newDiv.textContent = 'Dynamic content';
-newDiv.className = 'card';
-document.body.appendChild(newDiv);
+function addItem(text) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    li.addEventListener('click', function() {
+        this.remove();
+    });
+    
+    document.getElementById('list').appendChild(li);
+}
 
-// Event listeners
-element.addEventListener('click', function(e) {
-    console.log('Clicked!', e.target);
-});
-
-// Event delegation
-document.body.addEventListener('click', function(e) {
-    if (e.target.matches('.button')) {
-        console.log('Button clicked');
-    }
+// Form handling
+const form = document.getElementById('myForm');
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    console.log('Form submitted with:', Object.fromEntries(formData));
 });`
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        advanced: {
-            title: 'Advanced Path',
-            icon: 'bi-rocket',
-            color: 'danger',
-            description: 'Master advanced JavaScript concepts',
-            estimatedTime: '4-6 weeks',
-            modules: [
-                {
-                    id: 'async',
-                    title: 'Asynchronous JavaScript',
-                    lessons: [
-                        {
-                            id: 'promises',
-                            title: 'Promises',
-                            duration: '45 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Master asynchronous programming with Promises.',
-                                keyPoints: [
-                                    'Creating Promises',
-                                    'Promise chaining',
-                                    'Error handling',
-                                    'Promise.all, Promise.race'
-                                ],
-                                example: `// Creating a Promise
-const myPromise = new Promise((resolve, reject) => {
-    setTimeout(() => {
-        const success = Math.random() > 0.5;
-        if (success) {
-            resolve('Operation successful!');
-        } else {
-            reject('Operation failed!');
+          }
         }
-    }, 1000);
-});
+      ]
+    },
+    advanced: {
+      title: 'Advanced Path',
+      icon: '🚀',
+      description: 'Master advanced JavaScript concepts',
+      estimatedTime: '4-6 weeks',
+      lessons: [
+        {
+          id: 'async',
+          title: 'Asynchronous JavaScript',
+          duration: '45 min',
+          content: {
+            overview: 'Learn to handle asynchronous operations with Promises and async/await.',
+            keyPoints: [
+              'Understanding asynchronous programming',
+              'Promises: creation, chaining, and error handling',
+              'Async/await syntax and best practices',
+              'Handling multiple async operations'
+            ],
+            example: `// Promise creation
+function fetchUserData(userId) {
+    return new Promise((resolve, reject) => {
+        // Simulate API call
+        setTimeout(() => {
+            if (userId > 0) {
+                resolve({
+                    id: userId,
+                    name: 'John Doe',
+                    email: 'john@example.com'
+                });
+            } else {
+                reject(new Error('Invalid user ID'));
+            }
+        }, 1000);
+    });
+}
 
-// Using Promises
-myPromise
-    .then(result => {
-        console.log(result);
-        return 'Next step';
-    })
-    .then(nextResult => console.log(nextResult))
-    .catch(error => console.error(error))
-    .finally(() => console.log('Cleanup'));
-
-// Promise.all - wait for all
-const promises = [
-    fetch('/api/user'),
-    fetch('/api/posts'),
-    fetch('/api/comments')
-];
-
-Promise.all(promises)
-    .then(responses => console.log('All loaded'))
-    .catch(error => console.error('One failed'));
-
-// Promise.race - first to settle
-Promise.race(promises)
-    .then(first => console.log('First response'));`
-                            }
-                        },
-                        {
-                            id: 'async-await',
-                            title: 'Async/Await',
-                            duration: '40 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Modern asynchronous programming with async/await.',
-                                keyPoints: [
-                                    'Async functions',
-                                    'Await keyword',
-                                    'Error handling with try/catch',
-                                    'Parallel execution'
-                                ],
-                                example: `// Async function
-async function fetchUser(id) {
+// Using async/await
+async function getUserInfo(userId) {
     try {
-        const response = await fetch(\`/api/users/\${id}\`);
-        if (!response.ok) {
-            throw new Error('User not found');
-        }
-        const user = await response.json();
+        console.log('Fetching user data...');
+        const user = await fetchUserData(userId);
+        console.log('User found:', user);
         return user;
     } catch (error) {
-        console.error('Error:', error);
-        throw error;
+        console.error('Error:', error.message);
+        return null;
     }
 }
 
-// Using async function
-async function main() {
+// Using the async function
+getUserInfo(1).then(user => {
+    if (user) {
+        console.log(\`Welcome, \${user.name}!\`);
+    }
+});
+
+// Promise.all for multiple operations
+async function getAllData() {
     try {
-        const user = await fetchUser(123);
-        console.log(user);
+        const [user1, user2, user3] = await Promise.all([
+            fetchUserData(1),
+            fetchUserData(2),
+            fetchUserData(3)
+        ]);
+        
+        console.log('All users:', [user1, user2, user3]);
     } catch (error) {
-        console.error('Failed to fetch user');
+        console.error('One or more requests failed:', error);
     }
-}
-
-// Parallel execution
-async function fetchAll() {
-    const [users, posts] = await Promise.all([
-        fetch('/api/users').then(r => r.json()),
-        fetch('/api/posts').then(r => r.json())
-    ]);
-    
-    return { users, posts };
-}
-
-// Sequential vs Parallel
-async function sequential() {
-    const a = await fetch('/api/a');  // Wait
-    const b = await fetch('/api/b');  // Then wait
-}
-
-async function parallel() {
-    const [a, b] = await Promise.all([
-        fetch('/api/a'),
-        fetch('/api/b')
-    ]);  // Both at once
 }`
-                            }
-                        }
-                    ]
-                },
-                {
-                    id: 'es6-features',
-                    title: 'Modern JavaScript (ES6+)',
-                    lessons: [
-                        {
-                            id: 'modules',
-                            title: 'Modules',
-                            duration: '35 min',
-                            type: 'reading',
-                            content: {
-                                overview: 'Organize code with ES6 modules.',
-                                keyPoints: [
-                                    'Import and export',
-                                    'Named vs default exports',
-                                    'Module patterns',
-                                    'Dynamic imports'
-                                ],
-                                example: `// math.js - Named exports
+          }
+        },
+        {
+          id: 'modules',
+          title: 'ES6 Modules',
+          duration: '30 min',
+          content: {
+            overview: 'Organize your code with ES6 modules and imports/exports.',
+            keyPoints: [
+              'Named and default exports',
+              'Import syntax variations',
+              'Module patterns and best practices',
+              'Dynamic imports'
+            ],
+            example: `// math.js - Named exports
 export const PI = 3.14159;
+
 export function add(a, b) {
     return a + b;
 }
+
 export function multiply(a, b) {
     return a * b;
 }
 
-// main.js - Named imports
+// calculator.js - Default export
+export default class Calculator {
+    constructor() {
+        this.result = 0;
+    }
+    
+    add(num) {
+        this.result += num;
+        return this;
+    }
+    
+    multiply(num) {
+        this.result *= num;
+        return this;
+    }
+    
+    getResult() {
+        return this.result;
+    }
+}
+
+// main.js - Importing
+import Calculator from './calculator.js';
 import { PI, add, multiply } from './math.js';
 
-// utils.js - Default export
-export default class Calculator {
-    add(a, b) { return a + b; }
-    subtract(a, b) { return a - b; }
-}
-
-// main.js - Default import
-import Calculator from './utils.js';
+// Using the imports
 const calc = new Calculator();
+const result = calc.add(5).multiply(3).getResult();
 
-// Mixed exports
-export default function main() { }
-export const helper = () => { };
-
-// Mixed imports
-import mainFunc, { helper } from './module.js';
-
-// Dynamic import
-async function loadModule() {
-    const module = await import('./heavy-module.js');
-    module.doSomething();
-}`
-                            }
-                        },
-                        {
-                            id: 'classes',
-                            title: 'Classes and OOP',
-                            duration: '50 min',
-                            type: 'tutorial',
-                            content: {
-                                overview: 'Object-oriented programming with ES6 classes.',
-                                keyPoints: [
-                                    'Class syntax',
-                                    'Constructor and methods',
-                                    'Inheritance',
-                                    'Static methods'
-                                ],
-                                example: `// Class definition
-class Person {
-    constructor(name, age) {
-        this.name = name;
-        this.age = age;
-    }
-    
-    // Method
-    greet() {
-        return \`Hello, I'm \${this.name}\`;
-    }
-    
-    // Getter
-    get info() {
-        return \`\${this.name} is \${this.age} years old\`;
-    }
-    
-    // Setter
-    set info(value) {
-        [this.name, this.age] = value.split(',');
-    }
-    
-    // Static method
-    static species() {
-        return 'Homo sapiens';
-    }
-}
-
-// Inheritance
-class Student extends Person {
-    constructor(name, age, grade) {
-        super(name, age);  // Call parent constructor
-        this.grade = grade;
-    }
-    
-    // Override method
-    greet() {
-        return \`\${super.greet()}, I'm in grade \${this.grade}\`;
-    }
-    
-    study() {
-        return \`\${this.name} is studying\`;
-    }
-}
-
-// Usage
-const student = new Student('Alice', 20, 'A');
-console.log(student.greet());
-console.log(Student.species());`
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        projects: {
-            title: 'Project-Based Path',
-            icon: 'bi-hammer',
-            color: 'warning',
-            description: 'Learn by building real projects',
-            estimatedTime: '6-8 weeks',
-            modules: [
-                {
-                    id: 'mini-projects',
-                    title: 'Mini Projects',
-                    lessons: [
-                        {
-                            id: 'todo-app',
-                            title: 'Todo List App',
-                            duration: '2 hours',
-                            type: 'project',
-                            content: {
-                                overview: 'Build a fully functional todo list application.',
-                                features: [
-                                    'Add/remove tasks',
-                                    'Mark as complete',
-                                    'Filter tasks',
-                                    'Local storage'
-                                ],
-                                starter: '/playground',
-                                requirements: [
-                                    'Use DOM manipulation',
-                                    'Handle events',
-                                    'Store data in localStorage',
-                                    'Responsive design'
-                                ]
-                            }
-                        },
-                        {
-                            id: 'calculator',
-                            title: 'Calculator',
-                            duration: '1.5 hours',
-                            type: 'project',
-                            content: {
-                                overview: 'Create a functional calculator.',
-                                features: [
-                                    'Basic operations',
-                                    'Clear/reset',
-                                    'Decimal support',
-                                    'Keyboard support'
-                                ]
-                            }
-                        },
-                        {
-                            id: 'weather-app',
-                            title: 'Weather App',
-                            duration: '3 hours',
-                            type: 'project',
-                            content: {
-                                overview: 'Build a weather application using APIs.',
-                                features: [
-                                    'Fetch weather data',
-                                    'Search by city',
-                                    'Display forecast',
-                                    'Geolocation'
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
+console.log('Result:', result);
+console.log('PI:', PI);
+console.log('Add function:', add(2, 3));`
+          }
         }
-    };
+      ]
+    }
+  };
 
-    // Load progress from localStorage
-    useEffect(() => {
-        const savedProgress = localStorage.getItem('guideProgress');
-        if (savedProgress) {
-            const progress = JSON.parse(savedProgress);
-            setCompletedLessons(progress.completedLessons || []);
-            setUserNotes(progress.userNotes || {});
-        }
-    }, []);
+  const markLessonComplete = (lessonId) => {
+    if (!completedLessons.includes(lessonId)) {
+      setCompletedLessons([...completedLessons, lessonId]);
+    }
+  };
 
-    // Save progress to localStorage
-    useEffect(() => {
-        const progress = {
-            completedLessons,
-            userNotes,
-            lastAccessed: new Date().toISOString()
-        };
-        localStorage.setItem('guideProgress', JSON.stringify(progress));
-    }, [completedLessons, userNotes]);
+  const totalLessons = Object.values(learningPath).reduce(
+    (sum, path) => sum + path.lessons.length, 0
+  );
+  const progressPercentage = (completedLessons.length / totalLessons) * 100;
 
-    // Calculate overall progress
-    const calculateProgress = () => {
-        const allLessons = Object.values(learningPath).flatMap(path =>
-            path.modules.flatMap(module => module.lessons.map(lesson => lesson.id))
-        );
-        return Math.round((completedLessons.length / allLessons.length) * 100);
-    };
-
-    // Mark lesson as complete
-    const markLessonComplete = (lessonId) => {
-        if (!completedLessons.includes(lessonId)) {
-            setCompletedLessons([...completedLessons, lessonId]);
-        }
-    };
-
-    // Toggle module expansion
-    const toggleModule = (moduleId) => {
-        setExpandedModules(prev =>
-            prev.includes(moduleId)
-                ? prev.filter(id => id !== moduleId)
-                : [...prev, moduleId]
-        );
-    };
-
-    // Get next lesson
-    const getNextLesson = (currentLessonId) => {
-        let found = false;
-        for (const path of Object.values(learningPath)) {
-            for (const module of path.modules) {
-                for (let i = 0; i < module.lessons.length; i++) {
-                    if (found) return module.lessons[i];
-                    if (module.lessons[i].id === currentLessonId) {
-                        found = true;
-                        if (i < module.lessons.length - 1) {
-                            return module.lessons[i + 1];
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-    // Render lesson content
-    const renderLessonContent = (lesson) => {
-        const { content } = lesson;
-        
-        return (
-            <div className="lesson-content">
-                <div className="d-flex justify-content-between align-items-start mb-4">
-                    <div>
-                        <h3>{lesson.title}</h3>
-                        <div className="text-muted mb-3">
-                            <i className="bi bi-clock me-2"></i>{lesson.duration}
-                            <span className="ms-3">
-                                <i className="bi bi-tag me-2"></i>{lesson.type}
-                            </span>
-                        </div>
-                    </div>
-                    <button 
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => setCurrentLesson(null)}
-                    >
-                        <i className="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <div className="mb-4">
-                    <p className="lead">{content.overview}</p>
-                </div>
-
-                {content.keyPoints && (
-                    <div className="mb-4">
-                        <h5 className="mb-3">
-                            <i className="bi bi-check-circle text-success me-2"></i>
-                            Key Points
-                        </h5>
-                        <ul className="list-unstyled">
-                            {content.keyPoints.map((point, idx) => (
-                                <li key={idx} className="mb-2">
-                                    <i className="bi bi-arrow-right text-primary me-2"></i>
-                                    {point}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {content.example && (
-                    <div className="mb-4">
-                        <h5 className="mb-3">
-                            <i className="bi bi-code-slash text-info me-2"></i>
-                            Example Code
-                        </h5>
-                        <div className="bg-dark text-white p-3 rounded">
-                            <pre className="mb-0"><code>{content.example}</code></pre>
-                        </div>
-                        <div className="mt-2">
-                            <Link to="/playground" className="btn btn-sm btn-primary">
-                                <i className="bi bi-play-fill me-2"></i>
-                                Try in Playground
-                            </Link>
-                        </div>
-                    </div>
-                )}
-
-                {content.quiz && (
-                    <div className="mb-4">
-                        <h5 className="mb-3">
-                            <i className="bi bi-question-circle text-warning me-2"></i>
-                            Quick Quiz
-                        </h5>
-                        {content.quiz.map((q, idx) => (
-                            <div key={idx} className="card mb-3">
-                                <div className="card-body">
-                                    <h6>{q.question}</h6>
-                                    <div className="mt-3">
-                                        {q.options.map((opt, optIdx) => (
-                                            <div key={optIdx} className="form-check">
-                                                <input 
-                                                    className="form-check-input" 
-                                                    type="radio" 
-                                                    name={`quiz-${idx}`}
-                                                    id={`quiz-${idx}-${optIdx}`}
-                                                />
-                                                <label 
-                                                    className="form-check-label" 
-                                                    htmlFor={`quiz-${idx}-${optIdx}`}
-                                                >
-                                                    {opt}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {content.tasks && (
-                    <div className="mb-4">
-                        <h5 className="mb-3">
-                            <i className="bi bi-list-task text-primary me-2"></i>
-                            Tasks to Complete
-                        </h5>
-                        <div className="list-group">
-                            {content.tasks.map((task, idx) => (
-                                <label key={idx} className="list-group-item">
-                                    <input 
-                                        className="form-check-input me-2" 
-                                        type="checkbox"
-                                    />
-                                    {task}
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Notes Section */}
-                <div className="mb-4">
-                    <h5 className="mb-3">
-                        <i className="bi bi-pencil-square text-secondary me-2"></i>
-                        Your Notes
-                    </h5>
-                    <textarea 
-                        className="form-control"
-                        rows="4"
-                        placeholder="Add your notes here..."
-                        value={userNotes[lesson.id] || ''}
-                        onChange={(e) => setUserNotes({
-                            ...userNotes,
-                            [lesson.id]: e.target.value
-                        })}
-                    />
-                </div>
-
-                {/* Actions */}
-                <div className="d-flex justify-content-between align-items-center">
-                    <button 
-                        className={`btn ${completedLessons.includes(lesson.id) ? 'btn-success' : 'btn-outline-success'}`}
-                        onClick={() => markLessonComplete(lesson.id)}
-                    >
-                        <i className="bi bi-check-circle me-2"></i>
-                        {completedLessons.includes(lesson.id) ? 'Completed' : 'Mark as Complete'}
-                    </button>
-                    
-                    <button 
-                        className="btn btn-primary"
-                        onClick={() => {
-                            const next = getNextLesson(lesson.id);
-                            if (next) setCurrentLesson(next);
-                        }}
-                    >
-                        Next Lesson
-                        <i className="bi bi-arrow-right ms-2"></i>
-                    </button>
-                </div>
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+                🧭 JavaScript Learning Path
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Follow our structured curriculum to master JavaScript
+              </p>
             </div>
-        );
-    };
-
-    const overallProgress = calculateProgress();
-
-    return (
-        <div className="guide-page" style={{ paddingTop: '80px' }}>
-            <div className="container">
-                {/* Header */}
-                <div className="bg-white rounded shadow-sm p-4 mb-4">
-                    <div className="row align-items-center">
-                        <div className="col-md-8">
-                            <h2 className="mb-3">
-                                <i className="bi bi-compass text-primary me-2"></i>
-                                JavaScript Learning Path
-                            </h2>
-                            <p className="text-muted mb-0">
-                                Follow our structured curriculum to master JavaScript
-                            </p>
-                        </div>
-                        <div className="col-md-4 text-end">
-                            <div className="mb-2">
-                                <span className="text-muted">Overall Progress</span>
-                            </div>
-                            <div className="progress" style={{ height: '25px' }}>
-                                <div 
-                                    className="progress-bar bg-success"
-                                    style={{ width: `${overallProgress}%` }}
-                                >
-                                    {overallProgress}%
-                                </div>
-                            </div>
-                            {overallProgress === 100 && (
-                                <button 
-                                    className="btn btn-warning mt-2"
-                                    onClick={() => setShowCertificate(true)}
-                                >
-                                    <i className="bi bi-award me-2"></i>
-                                    View Certificate
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Path Selection Tabs */}
-                <ul className="nav nav-tabs mb-4">
-                    {Object.entries(learningPath).map(([key, path]) => (
-                        <li key={key} className="nav-item">
-                            <button 
-                                className={`nav-link ${activeModule === key ? 'active' : ''}`}
-                                onClick={() => setActiveModule(key)}
-                            >
-                                <i className={`bi ${path.icon} me-2`}></i>
-                                {path.title}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Current Path Content */}
-                <div className="row">
-                    {/* Path Overview */}
-                    <div className="col-lg-4 mb-4">
-                        <div className="card h-100">
-                            <div className="card-body">
-                                <h5 className="card-title">
-                                    <i className={`bi ${learningPath[activeModule].icon} text-${learningPath[activeModule].color} me-2`}></i>
-                                    {learningPath[activeModule].title}
-                                </h5>
-                                <p className="text-muted">
-                                    {learningPath[activeModule].description}
-                                </p>
-                                <div className="mb-3">
-                                    <i className="bi bi-clock me-2"></i>
-                                    <strong>Duration:</strong> {learningPath[activeModule].estimatedTime}
-                                </div>
-                                
-                                {/* Module Progress */}
-                                <div className="mb-3">
-                                    {learningPath[activeModule].modules.map(module => {
-                                        const moduleProgress = module.lessons.filter(l => 
-                                            completedLessons.includes(l.id)
-                                        ).length;
-                                        const totalLessons = module.lessons.length;
-                                        
-                                        return (
-                                            <div key={module.id} className="mb-2">
-                                                <small className="text-muted">{module.title}</small>
-                                                <div className="progress" style={{ height: '10px' }}>
-                                                    <div 
-                                                        className={`progress-bar bg-${learningPath[activeModule].color}`}
-                                                        style={{ width: `${(moduleProgress / totalLessons) * 100}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                <Link to="/challenges" className="btn btn-outline-primary w-100">
-                                    <i className="bi bi-puzzle me-2"></i>
-                                    Practice Challenges
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Lessons List or Content */}
-                    <div className="col-lg-8">
-                        {currentLesson ? (
-                            <div className="card">
-                                <div className="card-body">
-                                    {renderLessonContent(currentLesson)}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="accordion" id="modulesAccordion">
-                                {learningPath[activeModule].modules.map((module, moduleIdx) => (
-                                    <div key={module.id} className="accordion-item">
-                                        <h2 className="accordion-header">
-                                            <button 
-                                                className={`accordion-button ${!expandedModules.includes(module.id) ? 'collapsed' : ''}`}
-                                                type="button"
-                                                onClick={() => toggleModule(module.id)}
-                                            >
-                                                <span className="me-auto">
-                                                    <i className="bi bi-folder me-2"></i>
-                                                    {module.title}
-                                                </span>
-                                                <span className="badge bg-secondary me-2">
-                                                    {module.lessons.filter(l => completedLessons.includes(l.id)).length}/{module.lessons.length}
-                                                </span>
-                                            </button>
-                                        </h2>
-                                        <div className={`accordion-collapse collapse ${expandedModules.includes(module.id) ? 'show' : ''}`}>
-                                            <div className="accordion-body">
-                                                <div className="list-group">
-                                                    {module.lessons.map((lesson, lessonIdx) => (
-                                                        <button
-                                                            key={lesson.id}
-                                                            className="list-group-item list-group-item-action"
-                                                            onClick={() => setCurrentLesson(lesson)}
-                                                        >
-                                                            <div className="d-flex justify-content-between align-items-center">
-                                                                <div>
-                                                                    <h6 className="mb-1">
-                                                                        {completedLessons.includes(lesson.id) && (
-                                                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
-                                                                        )}
-                                                                        {lesson.title}
-                                                                    </h6>
-                                                                    <small className="text-muted">
-                                                                        <i className="bi bi-clock me-1"></i>
-                                                                        {lesson.duration}
-                                                                        <span className="ms-3">
-                                                                            <i className="bi bi-tag me-1"></i>
-                                                                            {lesson.type}
-                                                                        </span>
-                                                                    </small>
-                                                                </div>
-                                                                <i className="bi bi-chevron-right"></i>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Quick Links */}
-                <div className="mt-5">
-                    <h4 className="mb-3">Quick Links</h4>
-                    <div className="row g-3">
-                        <div className="col-md-3">
-                            <Link to="/documentation" className="card text-decoration-none h-100">
-                                <div className="card-body text-center">
-                                    <i className="bi bi-book text-primary" style={{ fontSize: '2rem' }}></i>
-                                    <h6 className="mt-2">Documentation</h6>
-                                </div>
-                            </Link>
-                        </div>
-                        <div className="col-md-3">
-                            <Link to="/playground" className="card text-decoration-none h-100">
-                                <div className="card-body text-center">
-                                    <i className="bi bi-code-square text-success" style={{ fontSize: '2rem' }}></i>
-                                    <h6 className="mt-2">Playground</h6>
-                                </div>
-                            </Link>
-                        </div>
-                        <div className="col-md-3">
-                            <Link to="/challenges" className="card text-decoration-none h-100">
-                                <div className="card-body text-center">
-                                    <i className="bi bi-trophy text-warning" style={{ fontSize: '2rem' }}></i>
-                                    <h6 className="mt-2">Challenges</h6>
-                                </div>
-                            </Link>
-                        </div>
-                        <div className="col-md-3">
-                            <a href="#" className="card text-decoration-none h-100">
-                                <div className="card-body text-center">
-                                    <i className="bi bi-discord text-info" style={{ fontSize: '2rem' }}></i>
-                                    <h6 className="mt-2">Community</h6>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Overall Progress: {completedLessons.length} / {totalLessons}
+              </div>
+              <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div 
+                  className="bg-green-500 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
             </div>
-
-            {/* Certificate Modal */}
-            {showCertificate && (
-                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">
-                                    <i className="bi bi-award text-warning me-2"></i>
-                                    Certificate of Completion
-                                </h5>
-                                <button 
-                                    className="btn-close"
-                                    onClick={() => setShowCertificate(false)}
-                                />
-                            </div>
-                            <div className="modal-body text-center">
-                                <div className="certificate p-5 bg-light rounded">
-                                    <i className="bi bi-award text-warning" style={{ fontSize: '4rem' }}></i>
-                                    <h2 className="mt-3">Congratulations!</h2>
-                                    <p className="lead">You have successfully completed the</p>
-                                    <h3 className="text-primary">JavaScript Learning Path</h3>
-                                    <p className="text-muted">
-                                        Issued on: {new Date().toLocaleDateString()}
-                                    </p>
-                                    <div className="mt-4">
-                                        <button className="btn btn-success me-2">
-                                            <i className="bi bi-download me-2"></i>
-                                            Download Certificate
-                                        </button>
-                                        <button className="btn btn-primary">
-                                            <i className="bi bi-share me-2"></i>
-                                            Share Achievement
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+          </div>
         </div>
-    );
+
+        {/* Path Selection */}
+        <div className="flex space-x-1 mb-6 bg-white dark:bg-gray-800 rounded-lg p-1">
+          {Object.entries(learningPath).map(([key, path]) => (
+            <button
+              key={key}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeModule === key
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveModule(key)}
+            >
+              <span className="mr-2">{path.icon}</span>
+              {path.title}
+            </button>
+          ))}
+        </div>
+
+        {/* Current Path Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Path Overview */}
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24">
+              <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+                {learningPath[activeModule].title}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {learningPath[activeModule].description}
+              </p>
+              <div className="mb-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  ⏱️ Estimated Time: {learningPath[activeModule].estimatedTime}
+                </span>
+              </div>
+              
+              <div className="space-y-3">
+                {learningPath[activeModule].lessons.map((lesson) => (
+                  <div
+                    key={lesson.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      currentLesson?.id === lesson.id
+                        ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                    onClick={() => setCurrentLesson(lesson)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-800 dark:text-white">
+                          {lesson.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {lesson.duration}
+                        </p>
+                      </div>
+                      {completedLessons.includes(lesson.id) && (
+                        <span className="text-green-500">✅</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="mt-6 space-y-2">
+                <button 
+                  onClick={() => navigateTo('playground')}
+                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  🎮 Open Playground
+                </button>
+                <button 
+                  onClick={() => navigateTo('challenges')}
+                  className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                >
+                  🏆 Try Challenges
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Lesson Content */}
+          <div className="lg:col-span-2">
+            {currentLesson ? (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                      {currentLesson.title}
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      ⏱️ {currentLesson.duration}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setCurrentLesson(null)}
+                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {currentLesson.content.overview}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                    📝 Key Points
+                  </h3>
+                  <ul className="space-y-2">
+                    {currentLesson.content.keyPoints.map((point, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-blue-500 mr-3 mt-1">→</span>
+                        <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                    💻 Example Code
+                  </h3>
+                  <div className="bg-gray-900 rounded-lg overflow-hidden">
+                    <div className="bg-gray-800 px-4 py-2 flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">JavaScript</span>
+                      <button 
+                        onClick={() => navigator.clipboard.writeText(currentLesson.content.example)}
+                        className="text-gray-400 hover:text-white text-sm"
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                    <pre className="p-4 text-gray-300 overflow-x-auto">
+                      <code>{currentLesson.content.example}</code>
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => markLessonComplete(currentLesson.id)}
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                      completedLessons.includes(currentLesson.id)
+                        ? 'bg-green-500 text-white'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                  >
+                    {completedLessons.includes(currentLesson.id) ? '✅ Completed' : '📚 Mark as Complete'}
+                  </button>
+                  
+                  <button 
+                    onClick={() => navigateTo('playground')}
+                    className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                  >
+                    🎮 Try in Playground
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center">
+                <div className="text-6xl mb-4">📖</div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-white">
+                  Select a Lesson
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Choose a lesson from the sidebar to start learning
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Progress Summary */}
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+            📊 Your Learning Progress
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(learningPath).map(([key, path]) => {
+              const pathCompleted = path.lessons.filter(lesson => 
+                completedLessons.includes(lesson.id)
+              ).length;
+              const pathTotal = path.lessons.length;
+              const pathProgress = (pathCompleted / pathTotal) * 100;
+              
+              return (
+                <div key={key} className="text-center">
+                  <div className="text-3xl mb-2">{path.icon}</div>
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-2">
+                    {path.title}
+                  </h4>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${pathProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {pathCompleted} / {pathTotal} lessons
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Completion Certificate */}
+        {progressPercentage === 100 && (
+          <div className="mt-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg shadow-lg p-8 text-center text-white">
+            <div className="text-4xl mb-4">🏆</div>
+            <h2 className="text-2xl font-bold mb-2">Congratulations!</h2>
+            <p className="text-lg mb-4">You've completed the JavaScript Learning Path!</p>
+            <p className="text-sm opacity-90 mb-6">
+              You've mastered {totalLessons} lessons across all difficulty levels
+            </p>
+            <div className="flex justify-center gap-4">
+              <button className="px-6 py-3 bg-white text-orange-500 rounded-lg hover:bg-gray-100 transition-colors font-semibold">
+                📜 Download Certificate
+              </button>
+              <button 
+                onClick={() => navigateTo('challenges')}
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
+              >
+                🏆 Try Advanced Challenges
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Links */}
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+            🔗 Continue Learning
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <button 
+              onClick={() => navigateTo('documentation')}
+              className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-all text-center"
+            >
+              <div className="text-2xl mb-2">📚</div>
+              <h4 className="font-semibold text-gray-800 dark:text-white">Documentation</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Reference & Examples</p>
+            </button>
+            
+            <button 
+              onClick={() => navigateTo('playground')}
+              className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-all text-center"
+            >
+              <div className="text-2xl mb-2">🎮</div>
+              <h4 className="font-semibold text-gray-800 dark:text-white">Playground</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Practice Coding</p>
+            </button>
+            
+            <button 
+              onClick={() => navigateTo('challenges')}
+              className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-all text-center"
+            >
+              <div className="text-2xl mb-2">🏆</div>
+              <h4 className="font-semibold text-gray-800 dark:text-white">Challenges</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Test Your Skills</p>
+            </button>
+            
+            <a 
+              href="#" 
+              className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-all text-center"
+            >
+              <div className="text-2xl mb-2">👥</div>
+              <h4 className="font-semibold text-gray-800 dark:text-white">Community</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Join Discussions</p>
+            </a>
+          </div>
+        </div>
+
+        {/* Learning Tips */}
+        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">
+            💡 Learning Tips
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700 dark:text-blue-300">
+            <div>
+              <h4 className="font-medium mb-2">📖 Study Effectively</h4>
+              <ul className="space-y-1">
+                <li>• Complete lessons in order</li>
+                <li>• Practice code examples</li>
+                <li>• Take notes on key concepts</li>
+                <li>• Review previous lessons regularly</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">🎯 Stay Motivated</h4>
+              <ul className="space-y-1">
+                <li>• Set daily learning goals</li>
+                <li>• Celebrate small wins</li>
+                <li>• Build real projects</li>
+                <li>• Join the community</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
