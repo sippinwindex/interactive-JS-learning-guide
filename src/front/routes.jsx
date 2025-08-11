@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/Home';
 import { Documentation } from './pages/Documentation';
-import { Playground } from './pages/Playground';
 import { Challenges } from './pages/Challenges';
 import { Guide } from './pages/Guide';
+// Remove the duplicate import from pages/Playground.jsx
+// Use only the component version which is the actual implementation
 import { Playground } from './components/playground/Playground';
 
 // Simple router component without external dependencies

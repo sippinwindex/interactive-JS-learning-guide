@@ -1,14 +1,14 @@
-// src/front/components/playground/Playground.jsx
+// src/front/pages/Playground.jsx
 import React, { useState, useReducer, useEffect, useRef } from 'react';
-import TopBar from './TopBar';
-import FileExplorer from './FileExplorer';
-import EditorTabs from './EditorTabs';
-import MonacoEditorWrapper from './MonacoEditorWrapper';
-import OutputPanel from './OutputPanel';
-import StatusBar from './StatusBar';
-import { playgroundReducer, initialState } from './utils/playgroundReducer';
-import { runCode } from './utils/codeRunner';
-import { defaultFiles } from './templates/defaultFiles';
+import TopBar from '../components/playground/TopBar';
+import FileExplorer from '../components/playground/FileExplorer';
+import EditorTabs from '../components/playground/EditorTabs';
+import MonacoEditorWrapper from '../components/playground/MonacoEditorWrapper';
+import OutputPanel from '../components/playground/OutputPanel';
+import StatusBar from '../components/playground/StatusBar';
+import { playgroundReducer, initialState } from '../components/playground/utils/playgroundReducer';
+import { runCode } from '../components/playground/utils/codeRunner';
+import { defaultFiles } from '../components/playground/templates/defaultFiles';
 
 export const Playground = ({ navigateTo, isDarkMode = false }) => {
   const [state, dispatch] = useReducer(playgroundReducer, initialState);

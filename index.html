@@ -5,11 +5,221 @@
     <link rel="icon" type="icon" href="/4geeks.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JS Learning Platform</title>
+    
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- NO BOOTSTRAP - Only your app CSS -->
+    
+    <!-- Monaco Editor CSS -->
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.min.css">
+    
+    <!-- Fira Code font for better code readability -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Dark mode support -->
+    <script>
+      // Initialize theme before page load to prevent flash
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        
+        if (shouldBeDark) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    
+    <!-- Monaco Editor Configuration -->
+    <script>
+      var require = { paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } };
+    </script>
+    
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    
+    <!-- Monaco Editor Main -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.nls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.js"></script>
+    
+    <!-- Performance and SEO optimizations -->
+    <meta name="description" content="Interactive JavaScript learning platform with live code editor, challenges, and comprehensive documentation">
+    <meta name="keywords" content="JavaScript, learning, coding, playground, challenges, tutorial, programming">
+    <meta name="author" content="JS Learning Platform">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="JS Learning Platform - Master JavaScript Interactively">
+    <meta property="og:description" content="Learn JavaScript through hands-on coding, real-time feedback, and progressive challenges">
+    <meta property="og:image" content="/og-image.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="JS Learning Platform">
+    <meta name="twitter:description" content="Interactive JavaScript learning with live code editor">
+    
+    <!-- Favicon variants -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/front/main.jsx" as="script">
+    
+    <!-- Custom CSS variables for theming -->
+    <style>
+      :root {
+        --color-matcha-50: #f0f7f0;
+        --color-matcha-500: #4a8a4a;
+        --color-matcha-600: #3d733d;
+        --color-wood-500: #b89968;
+        --color-wood-600: #a07c48;
+      }
+      
+      .dark {
+        --color-matcha-50: #1e301e;
+        --color-matcha-500: #5fa05f;
+        --color-matcha-600: #7cb77c;
+      }
+      
+      /* Loading spinner */
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Monaco Editor theme adjustments */
+      .monaco-editor {
+        font-family: 'Fira Code', 'Monaco', 'Menlo', monospace !important;
+        font-variant-ligatures: common-ligatures;
+      }
+      
+      /* Prevent flash of unstyled content */
+      #root {
+        min-height: 100vh;
+        background: var(--color-matcha-50);
+      }
+      
+      .dark #root {
+        background: #111827;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Loading fallback -->
+    <noscript>
+      <div style="text-align: center; padding: 50px; font-family: system-ui, sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>This application requires JavaScript to run. Please enable JavaScript in your browser.</p>
+      </div>
+    </noscript>
+    
+    <!-- Main app container -->
+    <div id="root">
+      <!-- Loading indicator shown while React app loads -->
+      <div id="initial-loader" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #4a8a4a 0%, #b89968 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        font-family: system-ui, sans-serif;
+        z-index: 9999;
+      ">
+        <div style="text-align: center;">
+          <div style="
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          "></div>
+          <h2 style="margin: 0 0 10px 0; font-size: 24px;">JS Learning Platform</h2>
+          <p style="margin: 0; opacity: 0.8;">Loading interactive environment...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Initialize Monaco Editor when page loads -->
+    <script>
+      // Configure Monaco Editor
+      if (typeof monaco !== 'undefined') {
+        monaco.editor.defineTheme('js-learning-dark', {
+          base: 'vs-dark',
+          inherit: true,
+          rules: [
+            { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+            { token: 'keyword', foreground: '569CD6' },
+            { token: 'string', foreground: 'CE9178' },
+            { token: 'number', foreground: 'B5CEA8' },
+            { token: 'function', foreground: 'DCDCAA' },
+          ],
+          colors: {
+            'editor.background': '#1E1E1E',
+            'editor.foreground': '#D4D4D4',
+            'editorLineNumber.foreground': '#858585',
+            'editor.selectionBackground': '#264F78',
+            'editor.lineHighlightBackground': '#2A2D2E'
+          }
+        });
+        
+        // Set default options
+        monaco.editor.setTheme('js-learning-dark');
+      }
+      
+      // Remove loading indicator when React app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loader = document.getElementById('initial-loader');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => loader.remove(), 500);
+          }
+        }, 1000);
+      });
+      
+      // Error handling for Monaco Editor
+      window.addEventListener('error', function(e) {
+        if (e.message.includes('monaco')) {
+          console.warn('Monaco Editor failed to load, falling back to basic text editor');
+        }
+      });
+    </script>
+    
+    <!-- React App Entry Point -->
     <script type="module" src="/src/front/main.jsx"></script>
+    
+    <!-- Analytics and monitoring (add your tracking codes here) -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
+    
+    <!-- Service Worker for offline support (optional) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          // Uncomment to enable service worker
+          // navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
 </html>
