@@ -1,119 +1,89 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 
-// Export as named export for routes.jsx
 // Component definition with proper export
 const Playground = ({ navigateTo, isDarkMode = false }) => {
-  // Professional templates for learning
-  const templates = {
-    welcome: {
-      name: '👋 Welcome Tutorial',
-      description: 'Start here to learn the basics',
-      html: `<!DOCTYPE html>
+  const [code, setCode] = useState({
+    html: `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to Coding!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Playground</title>
 </head>
 <body>
-    <div class="welcome-container">
-        <h1>🎉 Welcome to JavaScript!</h1>
-        <p>This is a VS Code-like editor. Try these features:</p>
-        
-        <ul>
-            <li>✨ IntelliSense (start typing and see suggestions)</li>
-            <li>🎨 Syntax highlighting</li>
-            <li>🔍 Error detection</li>
-            <li>⚡ Auto-completion</li>
-        </ul>
-        
-        <button id="startBtn" class="start-button">
-            Click to Start Learning!
-        </button>
-        
-        <div id="output" class="output-area"></div>
+    <div id="app">
+        <h1>Welcome to JavaScript Playground!</h1>
+        <p>Start coding and see the results instantly.</p>
+        <button id="myButton">Click Me!</button>
+        <div id="output"></div>
     </div>
 </body>
 </html>`,
-      css: `* {
+    css: `body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #333;
 }
 
-.welcome-container {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+#app {
     max-width: 600px;
-    width: 100%;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 h1 {
-    color: #667eea;
+    color: #333;
     margin-bottom: 20px;
-    font-size: 2.5rem;
-    text-align: center;
 }
 
-.start-button {
-    width: 100%;
-    padding: 15px;
-    font-size: 18px;
-    font-weight: bold;
+button {
+    background: #667eea;
     color: white;
-    background: linear-gradient(135deg, #667eea, #764ba2);
     border: none;
-    border-radius: 10px;
+    padding: 10px 20px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: all 0.3s;
-    margin-top: 20px;
+    font-size: 16px;
 }
 
-.start-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-}`,
-      javascript: `console.log('🚀 VS Code Playground Ready!');
+button:hover {
+    background: #5569d8;
+}
 
-const button = document.getElementById('startBtn');
+#output {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    min-height: 50px;
+}`,
+    javascript: `console.log('Welcome to JavaScript Playground!');
+
+const button = document.getElementById('myButton');
 const output = document.getElementById('output');
 
-button?.addEventListener('click', function() {
-    output.style.display = 'block';
-    output.innerHTML = '<h3>🎉 Great job! You clicked the button!</h3>';
-    console.log('Button clicked!');
+button.addEventListener('click', () => {
+    const message = 'Button clicked at ' + new Date().toLocaleTimeString();
+    output.innerHTML = '<p>' + message + '</p>';
+    console.log(message);
 });`
-    }
-  };
-
-  const [code, setCode] = useState({
-    html: templates.welcome.html,
-    css: templates.welcome.css,
-    javascript: templates.welcome.javascript
   });
 
-  const [activeTab, setActiveTab] = useState('html');
-  const [autoRun, setAutoRun] = useState(true);
+  const [activeTab, setActiveTab] = useState('javascript');
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [editorTheme, setEditorTheme] = useState('dracula');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showExamples, setShowExamples] = useState(false);
+  const [showConsole, setShowConsole] = useState(true);
+  const [layoutMode, setLayoutMode] = useState('horizontal'); // horizontal or vertical
+  const [fontSize, setFontSize] = useState(14);
   
   const iframeRef = useRef(null);
-  const runTimeoutRef = useRef(null);
   const containerRef = useRef(null);
   const editorRef = useRef(null);
 
@@ -177,7 +147,9 @@ button?.addEventListener('click', function() {
         { token: 'string', foreground: '9ece6a' },
         { token: 'number', foreground: 'ff9e64' },
         { token: 'function', foreground: '7aa2f7' },
-        { token: 'variable', foreground: 'c0caf5' }
+        { token: 'variable', foreground: 'c0caf5' },
+        { token: 'type', foreground: '2ac3de' },
+        { token: 'tag', foreground: 'f7768e' }
       ],
       colors: {
         'editor.background': '#1a1b26',
@@ -233,6 +205,28 @@ button?.addEventListener('click', function() {
       }
     });
 
+    // GitHub Light Theme
+    monaco.editor.defineTheme('github-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '6e7781', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'cf222e' },
+        { token: 'string', foreground: '0a3069' },
+        { token: 'number', foreground: '0550ae' },
+        { token: 'function', foreground: '8250df' },
+        { token: 'variable', foreground: '953800' }
+      ],
+      colors: {
+        'editor.background': '#ffffff',
+        'editor.foreground': '#24292f',
+        'editor.lineHighlightBackground': '#f6f8fa',
+        'editor.selectionBackground': '#0969da1a',
+        'editorCursor.foreground': '#0969da',
+        'editorLineNumber.foreground': '#8c959f'
+      }
+    });
+
     // One Dark Theme
     monaco.editor.defineTheme('one-dark', {
       base: 'vs-dark',
@@ -252,6 +246,94 @@ button?.addEventListener('click', function() {
         'editor.selectionBackground': '#3e4451',
         'editorCursor.foreground': '#528bff',
         'editorLineNumber.foreground': '#5c6370'
+      }
+    });
+
+    // Material Theme
+    monaco.editor.defineTheme('material', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '546e7a', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c792ea' },
+        { token: 'string', foreground: 'c3e88d' },
+        { token: 'number', foreground: 'f78c6c' },
+        { token: 'function', foreground: '82aaff' },
+        { token: 'variable', foreground: 'f07178' }
+      ],
+      colors: {
+        'editor.background': '#263238',
+        'editor.foreground': '#eeffff',
+        'editor.lineHighlightBackground': '#00000050',
+        'editor.selectionBackground': '#00000050',
+        'editorCursor.foreground': '#ffcc00',
+        'editorLineNumber.foreground': '#37474f'
+      }
+    });
+
+    // Nord Theme
+    monaco.editor.defineTheme('nord', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '616e88', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '81a1c1' },
+        { token: 'string', foreground: 'a3be8c' },
+        { token: 'number', foreground: 'b48ead' },
+        { token: 'function', foreground: '88c0d0' },
+        { token: 'variable', foreground: 'd8dee9' }
+      ],
+      colors: {
+        'editor.background': '#2e3440',
+        'editor.foreground': '#d8dee9',
+        'editor.lineHighlightBackground': '#3b4252',
+        'editor.selectionBackground': '#434c5e',
+        'editorCursor.foreground': '#d8dee9',
+        'editorLineNumber.foreground': '#4c566a'
+      }
+    });
+
+    // Solarized Dark Theme
+    monaco.editor.defineTheme('solarized-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '586e75', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '859900' },
+        { token: 'string', foreground: '2aa198' },
+        { token: 'number', foreground: 'd33682' },
+        { token: 'function', foreground: '268bd2' },
+        { token: 'variable', foreground: '839496' }
+      ],
+      colors: {
+        'editor.background': '#002b36',
+        'editor.foreground': '#839496',
+        'editor.lineHighlightBackground': '#073642',
+        'editor.selectionBackground': '#073642',
+        'editorCursor.foreground': '#839496',
+        'editorLineNumber.foreground': '#586e75'
+      }
+    });
+
+    // Solarized Light Theme
+    monaco.editor.defineTheme('solarized-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '93a1a1', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '859900' },
+        { token: 'string', foreground: '2aa198' },
+        { token: 'number', foreground: 'd33682' },
+        { token: 'function', foreground: '268bd2' },
+        { token: 'variable', foreground: '657b83' }
+      ],
+      colors: {
+        'editor.background': '#fdf6e3',
+        'editor.foreground': '#657b83',
+        'editor.lineHighlightBackground': '#eee8d5',
+        'editor.selectionBackground': '#eee8d5',
+        'editorCursor.foreground': '#657b83',
+        'editorLineNumber.foreground': '#93a1a1'
       }
     });
 
@@ -298,14 +380,84 @@ button?.addEventListener('click', function() {
         'editorLineNumber.foreground': '#4b6479'
       }
     });
+
+    // Palenight Theme
+    monaco.editor.defineTheme('palenight', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '676e95', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c792ea' },
+        { token: 'string', foreground: 'c3e88d' },
+        { token: 'number', foreground: 'f78c6c' },
+        { token: 'function', foreground: '82aaff' },
+        { token: 'variable', foreground: 'f07178' }
+      ],
+      colors: {
+        'editor.background': '#292d3e',
+        'editor.foreground': '#a6accd',
+        'editor.lineHighlightBackground': '#00000030',
+        'editor.selectionBackground': '#717cb440',
+        'editorCursor.foreground': '#ffcc00',
+        'editorLineNumber.foreground': '#3a3f58'
+      }
+    });
+
+    // Ayu Dark Theme
+    monaco.editor.defineTheme('ayu-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '5c6773', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'ffa759' },
+        { token: 'string', foreground: 'bae67e' },
+        { token: 'number', foreground: 'ffcc66' },
+        { token: 'function', foreground: 'ffd580' },
+        { token: 'variable', foreground: 'cbccc6' }
+      ],
+      colors: {
+        'editor.background': '#0a0e14',
+        'editor.foreground': '#b3b1ad',
+        'editor.lineHighlightBackground': '#00010a',
+        'editor.selectionBackground': '#273747',
+        'editorCursor.foreground': '#ff6a00',
+        'editorLineNumber.foreground': '#3d424d'
+      }
+    });
+
+    // Ayu Light Theme
+    monaco.editor.defineTheme('ayu-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: 'abb0b6', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'fa8d3e' },
+        { token: 'string', foreground: '86b300' },
+        { token: 'number', foreground: 'ff9940' },
+        { token: 'function', foreground: 'f2ae49' },
+        { token: 'variable', foreground: '5c6773' }
+      ],
+      colors: {
+        'editor.background': '#fafafa',
+        'editor.foreground': '#5c6773',
+        'editor.lineHighlightBackground': '#f2f2f2',
+        'editor.selectionBackground': '#d1e4f4',
+        'editorCursor.foreground': '#ff6a00',
+        'editorLineNumber.foreground': '#abb0b6'
+      }
+    });
   };
 
-  // Handle editor mount - define themes
+  // Handle editor mount
   const handleEditorMount = (editor, monaco) => {
     editorRef.current = editor;
     defineCustomThemes(monaco);
     
     // Add keyboard shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      runCode();
+    });
+    
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       runCode();
     });
@@ -315,6 +467,7 @@ button?.addEventListener('click', function() {
     if (!iframeRef.current) return;
     
     setIsRunning(true);
+    setConsoleOutput([]); // Clear previous console output
     
     const iframe = iframeRef.current;
     const fullHTML = `
@@ -326,7 +479,7 @@ button?.addEventListener('click', function() {
   <style>${code.css}</style>
 </head>
 <body>
-  ${code.html}
+  ${code.html.replace(/<\/?html[^>]*>/gi, '').replace(/<\/?head[^>]*>/gi, '').replace(/<\/?body[^>]*>/gi, '').replace(/<style[^>]*>.*?<\/style>/gi, '')}
   <script>
     const originalConsole = { ...console };
     
@@ -349,12 +502,17 @@ button?.addEventListener('click', function() {
       }, '*');
     }
     
-    ['log', 'error', 'warn', 'info'].forEach(method => {
+    ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
       console[method] = function(...args) {
         sendToParent(method, args);
         originalConsole[method].apply(console, args);
       };
     });
+    
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error('Error at line ' + lineNo + ': ' + msg);
+      return false;
+    };
     
     try {
       ${code.javascript}
@@ -376,18 +534,16 @@ button?.addEventListener('click', function() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data && event.data.type === 'console') {
-        const timestamp = new Date().toLocaleTimeString('en-US', { 
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        
         setConsoleOutput(prev => {
           const newLog = {
             method: event.data.method,
             args: event.data.args,
-            timestamp
+            timestamp: new Date().toLocaleTimeString('en-US', { 
+              hour12: false,
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            })
           };
           return [...prev, newLog].slice(-100);
         });
@@ -398,932 +554,257 @@ button?.addEventListener('click', function() {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Auto-run with debounce
-  useEffect(() => {
-    if (autoRun) {
-      if (runTimeoutRef.current) {
-        clearTimeout(runTimeoutRef.current);
-      }
-      
-      runTimeoutRef.current = setTimeout(runCode, 1000);
-      
-      return () => {
-        if (runTimeoutRef.current) {
-          clearTimeout(runTimeoutRef.current);
-        }
-      };
-    }
-  }, [code, autoRun]);
-
-  // Initial run
+  // Auto-run on mount
   useEffect(() => {
     setTimeout(runCode, 100);
   }, []);
-
-  // Fullscreen handling
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  // Load example code
-  const loadExample = (exampleKey) => {
-    console.log('Loading example:', exampleKey);
-    
-    // Define examples directly in the component for now
-    const examples = {
-      calculator: {
-        name: '🧮 Calculator',
-        html: `<div class="calculator">
-  <h1>Calculator</h1>
-  <input type="text" id="display" readonly value="0">
-  <div class="buttons">
-    <button onclick="clearDisplay()">C</button>
-    <button onclick="appendToDisplay('/')">÷</button>
-    <button onclick="appendToDisplay('*')">×</button>
-    <button onclick="deleteLast()">←</button>
-    <button onclick="appendToDisplay('7')">7</button>
-    <button onclick="appendToDisplay('8')">8</button>
-    <button onclick="appendToDisplay('9')">9</button>
-    <button onclick="appendToDisplay('-')">-</button>
-    <button onclick="appendToDisplay('4')">4</button>
-    <button onclick="appendToDisplay('5')">5</button>
-    <button onclick="appendToDisplay('6')">6</button>
-    <button onclick="appendToDisplay('+')">+</button>
-    <button onclick="appendToDisplay('1')">1</button>
-    <button onclick="appendToDisplay('2')">2</button>
-    <button onclick="appendToDisplay('3')">3</button>
-    <button onclick="calculate()">=</button>
-    <button onclick="appendToDisplay('0')">0</button>
-    <button onclick="appendToDisplay('.')">.</button>
-  </div>
-</div>`,
-        css: `body {
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-.calculator {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-h1 {
-  text-align: center;
-  color: #667eea;
-}
-
-#display {
-  width: 100%;
-  padding: 10px;
-  font-size: 24px;
-  text-align: right;
-  margin-bottom: 10px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
-}
-
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-button {
-  padding: 20px;
-  font-size: 18px;
-  border: none;
-  border-radius: 5px;
-  background: #f0f0f0;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #e0e0e0;
-}
-
-button:active {
-  transform: scale(0.95);
-}`,
-        javascript: `let display = document.getElementById('display');
-let currentValue = '0';
-let shouldResetDisplay = false;
-
-function updateDisplay() {
-  display.value = currentValue;
-}
-
-function clearDisplay() {
-  currentValue = '0';
-  updateDisplay();
-}
-
-function appendToDisplay(value) {
-  if (shouldResetDisplay) {
-    currentValue = '0';
-    shouldResetDisplay = false;
-  }
-  
-  if (currentValue === '0' && value !== '.') {
-    currentValue = value;
-  } else {
-    currentValue += value;
-  }
-  
-  updateDisplay();
-}
-
-function deleteLast() {
-  if (currentValue.length > 1) {
-    currentValue = currentValue.slice(0, -1);
-  } else {
-    currentValue = '0';
-  }
-  updateDisplay();
-}
-
-function calculate() {
-  try {
-    currentValue = eval(currentValue).toString();
-    shouldResetDisplay = true;
-    updateDisplay();
-  } catch (error) {
-    currentValue = 'Error';
-    shouldResetDisplay = true;
-    updateDisplay();
-  }
-}`
-      },
-      todo: {
-        name: '✅ To-Do List',
-        html: `<div class="todo-app">
-  <h1>✅ To-Do List</h1>
-  <div class="input-section">
-    <input type="text" id="taskInput" placeholder="Add a new task...">
-    <button onclick="addTask()">Add</button>
-  </div>
-  <ul id="taskList"></ul>
-  <div class="footer">
-    <span id="taskCount">0 tasks</span>
-    <button onclick="clearCompleted()">Clear Completed</button>
-  </div>
-</div>`,
-        css: `body {
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  background: linear-gradient(135deg, #a8edea, #fed6e3);
-}
-
-.todo-app {
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  width: 400px;
-}
-
-h1 {
-  text-align: center;
-  color: #333;
-}
-
-.input-section {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-#taskInput {
-  flex: 1;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-}
-
-button {
-  padding: 10px 20px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #5569d8;
-}
-
-#taskList {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0;
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: #f8f9fa;
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
-
-.task-item.completed {
-  opacity: 0.6;
-  text-decoration: line-through;
-}
-
-.task-item input[type="checkbox"] {
-  margin-right: 10px;
-}
-
-.task-item button {
-  margin-left: auto;
-  padding: 5px 10px;
-  background: #ff6b6b;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 20px;
-  border-top: 2px solid #eee;
-}`,
-        javascript: `let tasks = [];
-
-function renderTasks() {
-  const taskList = document.getElementById('taskList');
-  taskList.innerHTML = '';
-  
-  tasks.forEach((task, index) => {
-    const li = document.createElement('li');
-    li.className = 'task-item' + (task.completed ? ' completed' : '');
-    li.innerHTML = \`
-      <input type="checkbox" \${task.completed ? 'checked' : ''} 
-             onchange="toggleTask(\${index})">
-      <span>\${task.text}</span>
-      <button onclick="deleteTask(\${index})">Delete</button>
-    \`;
-    taskList.appendChild(li);
-  });
-  
-  updateCount();
-}
-
-function addTask() {
-  const input = document.getElementById('taskInput');
-  if (input.value.trim() === '') return;
-  
-  tasks.push({
-    text: input.value,
-    completed: false
-  });
-  
-  input.value = '';
-  renderTasks();
-}
-
-function toggleTask(index) {
-  tasks[index].completed = !tasks[index].completed;
-  renderTasks();
-}
-
-function deleteTask(index) {
-  tasks.splice(index, 1);
-  renderTasks();
-}
-
-function clearCompleted() {
-  tasks = tasks.filter(task => !task.completed);
-  renderTasks();
-}
-
-function updateCount() {
-  const count = tasks.filter(t => !t.completed).length;
-  document.getElementById('taskCount').textContent = count + ' task' + (count !== 1 ? 's' : '');
-}
-
-// Allow Enter key to add tasks
-document.getElementById('taskInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') addTask();
-});
-
-renderTasks();`
-      },
-      clock: {
-        name: '🕐 Digital Clock',
-        html: `<div class="clock-container">
-  <h1>🕐 Digital Clock</h1>
-  <div class="clock">
-    <div id="time">00:00:00</div>
-    <div id="date">Loading...</div>
-  </div>
-  <div class="controls">
-    <button onclick="toggleFormat()">Toggle 12/24 Hour</button>
-  </div>
-</div>`,
-        css: `body {
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-}
-
-.clock-container {
-  text-align: center;
-}
-
-h1 {
-  color: white;
-  margin-bottom: 30px;
-}
-
-.clock {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 30px 50px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-#time {
-  font-size: 4rem;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  font-weight: bold;
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
-}
-
-#date {
-  font-size: 1.2rem;
-  color: #88ccff;
-  margin-top: 10px;
-}
-
-.controls {
-  margin-top: 20px;
-}
-
-button {
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid white;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-}`,
-        javascript: `let is24Hour = true;
-
-function updateClock() {
-  const now = new Date();
-  let hours = now.getHours();
-  let minutes = now.getMinutes();
-  let seconds = now.getSeconds();
-  let period = '';
-  
-  if (!is24Hour) {
-    period = hours >= 12 ? ' PM' : ' AM';
-    hours = hours % 12 || 12;
-  }
-  
-  const timeString = 
-    String(hours).padStart(2, '0') + ':' +
-    String(minutes).padStart(2, '0') + ':' +
-    String(seconds).padStart(2, '0') + period;
-  
-  document.getElementById('time').textContent = timeString;
-  
-  const dateOptions = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  };
-  document.getElementById('date').textContent = now.toLocaleDateString('en-US', dateOptions);
-}
-
-function toggleFormat() {
-  is24Hour = !is24Hour;
-  updateClock();
-}
-
-// Update clock every second
-setInterval(updateClock, 1000);
-updateClock(); // Initial call`
-      }
-    };
-    
-    const example = examples[exampleKey];
-    if (example) {
-      setCode({
-        html: example.html || '',
-        css: example.css || '',
-        javascript: example.javascript || ''
-      });
-      setShowExamples(false);
-      setTimeout(runCode, 100);
-    }
-  };
-
-  // Load HTML template
-  const loadTemplate = () => {
-    setCode({
-      html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
-</head>
-<body>
-    <header>
-        <h1>Welcome to My Website</h1>
-        <nav>
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-    
-    <main>
-        <section id="home">
-            <h2>Home Section</h2>
-            <p>This is the home section content.</p>
-            <button id="myButton">Click Me!</button>
-        </section>
-        
-        <section id="about">
-            <h2>About Section</h2>
-            <p>Learn more about us here.</p>
-        </section>
-        
-        <section id="contact">
-            <h2>Contact Section</h2>
-            <form>
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required>
-                
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-                
-                <label for="message">Message:</label>
-                <textarea id="message" name="message" rows="4" required></textarea>
-                
-                <button type="submit">Send Message</button>
-            </form>
-        </section>
-    </main>
-    
-    <footer>
-        <p>&copy; 2024 My Website. All rights reserved.</p>
-    </footer>
-</body>
-</html>`,
-      css: `/* CSS Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Body Styles */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
-}
-
-/* Header Styles */
-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1rem 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-header h1 {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-/* Navigation */
-nav ul {
-    list-style: none;
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
-
-nav a:hover {
-    background: rgba(255,255,255,0.2);
-}
-
-/* Main Content */
-main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 20px;
-}
-
-section {
-    background: white;
-    margin-bottom: 2rem;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-h2 {
-    color: #667eea;
-    margin-bottom: 1rem;
-}
-
-/* Button Styles */
-button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s;
-}
-
-button:hover {
-    background: #5569d8;
-}
-
-/* Form Styles */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-label {
-    font-weight: bold;
-    color: #555;
-}
-
-input, textarea {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-input:focus, textarea:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-/* Footer */
-footer {
-    background: #333;
-    color: white;
-    text-align: center;
-    padding: 1rem 0;
-    margin-top: 2rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    nav ul {
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    main {
-        padding: 0 10px;
-    }
-}`,
-      javascript: `// JavaScript code for interactivity
-console.log('Website loaded successfully!');
-
-// Get DOM elements
-const button = document.getElementById('myButton');
-const form = document.querySelector('form');
-
-// Button click handler
-button.addEventListener('click', function() {
-    alert('Hello! You clicked the button!');
-    console.log('Button was clicked at:', new Date().toLocaleTimeString());
-});
-
-// Form submission handler
-form.addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent actual form submission
-    
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const message = document.getElementById('message').value;
-    
-    console.log('Form submitted with:', {
-        name: name,
-        email: email,
-        message: message
-    });
-    
-    alert(\`Thank you, \${name}! Your message has been received.\`);
-    
-    // Reset form
-    form.reset();
-});
-
-// Smooth scrolling for navigation links
-document.querySelectorAll('nav a').forEach(link => {
-    link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href').substring(1);
-        const targetSection = document.getElementById(targetId);
-        
-        if (targetSection) {
-            targetSection.scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-    });
-});
-
-// Add some dynamic content
-const homeSection = document.querySelector('#home p');
-homeSection.innerHTML += ' <strong>This text was added with JavaScript!</strong>';
-
-console.log('All event listeners attached successfully!');`
-    });
-    setTimeout(runCode, 100);
-    console.log('HTML template loaded');
-  };
-
-  // Clear all code
-  const clearAll = () => {
-    const confirmClear = window.confirm('Are you sure you want to clear all code? This cannot be undone.');
-    if (confirmClear) {
-      setCode({
-        html: '',
-        css: '',
-        javascript: ''
-      });
-      setConsoleOutput([]);
-      console.log('All code cleared');
-      setTimeout(runCode, 100);
-    }
-  };
 
   const clearConsole = () => setConsoleOutput([]);
+  
+  const downloadCode = () => {
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Project</title>
+  <style>
+${code.css}
+  </style>
+</head>
+<body>
+${code.html}
+  <script>
+${code.javascript}
+  </script>
+</body>
+</html>`;
+    
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const tabs = [
-    { key: 'html', label: 'HTML', language: 'html' },
-    { key: 'css', label: 'CSS', language: 'css' },
-    { key: 'javascript', label: 'JavaScript', language: 'javascript' }
+    { key: 'javascript', label: 'JavaScript', icon: '{ }', color: 'text-yellow-500' },
+    { key: 'html', label: 'HTML', icon: '</>', color: 'text-orange-500' },
+    { key: 'css', label: 'CSS', icon: '#', color: 'text-blue-500' }
   ];
 
   return (
-    <div ref={containerRef} className={`${isFullscreen ? 'fixed inset-0 z-50 bg-gray-900 overflow-hidden' : 'min-h-screen bg-gray-50 dark:bg-gray-900 pt-16'}`}>
-      <div className={`${isFullscreen ? 'h-full p-4' : 'max-w-7xl mx-auto px-4 py-8'}`}>
-        {/* Header */}
-        <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm ${isFullscreen ? 'p-4 mb-4' : 'p-6 mb-6'}`}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className={`${isFullscreen ? 'text-2xl' : 'text-3xl'} font-bold text-gray-800 dark:text-white`}>
-                🚀 VS Code Playground
-              </h1>
-              {!isFullscreen && (
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Write HTML, CSS, and JavaScript with live preview
-                </p>
-              )}
+    <div ref={containerRef} className="h-screen bg-gray-900 flex flex-col overflow-hidden">
+      {/* Top Bar - PlayCode.io Style */}
+      <div className="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded flex items-center justify-center">
+              <span className="text-white font-bold text-sm">JS</span>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowExamples(!showExamples)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                📚 Examples
-              </button>
-              <button
-                onClick={loadTemplate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                title="Load HTML template"
-              >
-                📄 Template
-              </button>
-              <button
-                onClick={clearAll}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                title="Clear all code"
-              >
-                🗑️ Clear
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-              >
-                {isFullscreen ? '🗗 Exit' : '⛶ Fullscreen'}
-              </button>
-            </div>
+            <span className="text-white font-semibold">Playground</span>
           </div>
           
-          {/* Examples Dropdown */}
-          {showExamples && (
-            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Choose an Example:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button
-                  onClick={() => loadExample('calculator')}
-                  className="p-3 bg-white dark:bg-gray-600 rounded-lg hover:shadow-md transition-all text-left"
-                >
-                  <div className="font-medium text-gray-800 dark:text-white">🧮 Calculator</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Interactive calculator with operations</div>
-                </button>
-                
-                <button
-                  onClick={() => loadExample('todo')}
-                  className="p-3 bg-white dark:bg-gray-600 rounded-lg hover:shadow-md transition-all text-left"
-                >
-                  <div className="font-medium text-gray-800 dark:text-white">✅ To-Do List</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Task manager with add/delete</div>
-                </button>
-                
-                <button
-                  onClick={() => loadExample('clock')}
-                  className="p-3 bg-white dark:bg-gray-600 rounded-lg hover:shadow-md transition-all text-left"
-                >
-                  <div className="font-medium text-gray-800 dark:text-white">🕐 Digital Clock</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Animated clock with date display</div>
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Run Button */}
+          <button
+            onClick={runCode}
+            className={`px-4 py-1.5 rounded flex items-center gap-2 text-white font-medium transition-all ${
+              isRunning 
+                ? 'bg-orange-600 hover:bg-orange-700' 
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+          >
+            {isRunning ? (
+              <>
+                <span className="animate-spin">⟳</span> Running...
+              </>
+            ) : (
+              <>
+                ▶ Run
+              </>
+            )}
+          </button>
         </div>
 
-        {/* Main Editor Area - Adjusts height in fullscreen */}
-        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${isFullscreen ? 'h-[calc(100vh-120px)]' : ''}`}>
-          {/* Editor Panel */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden flex flex-col">
-            {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            
-            {/* Monaco Editor - Dynamic height */}
-            <div className="flex-1" style={{ height: isFullscreen ? 'calc(100% - 120px)' : '500px' }}>
-              <Editor
-                height="100%"
-                language={tabs.find(t => t.key === activeTab)?.language}
-                value={code[activeTab]}
-                theme={editorTheme}
-                onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
-                onMount={handleEditorMount}
-                options={{
-                  minimap: { enabled: isFullscreen },
-                  fontSize: isFullscreen ? 16 : 14,
-                  lineNumbers: 'on',
-                  wordWrap: 'on',
-                  automaticLayout: true
-                }}
-              />
-            </div>
-            
-            {/* Controls */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <label className="flex items-center gap-2 text-sm">
-                <input 
-                  type="checkbox"
-                  checked={autoRun}
-                  onChange={(e) => setAutoRun(e.target.checked)}
-                  className="rounded"
-                />
-                Auto-run
-              </label>
-              
-              <div className="flex items-center gap-3">
-                <select 
-                  value={editorTheme}
-                  onChange={(e) => setEditorTheme(e.target.value)}
-                  className="text-sm px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                >
-                  <optgroup label="Popular Themes">
-                    <option value="dracula">🧛 Dracula</option>
-                    <option value="monokai">🎨 Monokai Pro</option>
-                    <option value="tokyo-night">🌃 Tokyo Night</option>
-                    <option value="cobalt2">💎 Cobalt2</option>
-                    <option value="one-dark">🔵 One Dark Pro</option>
-                    <option value="synthwave">🌆 SynthWave '84</option>
-                    <option value="night-owl">🦉 Night Owl</option>
-                    <option value="github-dark">🐙 GitHub Dark</option>
-                  </optgroup>
-                  <optgroup label="Classic Themes">
-                    <option value="vs-dark">🌑 Dark (Visual Studio)</option>
-                    <option value="vs">☀️ Light (Visual Studio)</option>
-                    <option value="hc-black">⚫ High Contrast Dark</option>
-                    <option value="hc-light">⚪ High Contrast Light</option>
-                  </optgroup>
-                </select>
-                
-                <button 
-                  onClick={runCode}
-                  className="px-4 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
-                >
-                  ▶ Run Code
-                </button>
-              </div>
+        {/* Right side controls */}
+        <div className="flex items-center gap-3">
+          {/* Font Size */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFontSize(Math.max(10, fontSize - 2))}
+              className="text-gray-400 hover:text-white px-2 py-1"
+            >
+              A-
+            </button>
+            <span className="text-gray-400 text-sm">{fontSize}px</span>
+            <button
+              onClick={() => setFontSize(Math.min(24, fontSize + 2))}
+              className="text-gray-400 hover:text-white px-2 py-1"
+            >
+              A+
+            </button>
+          </div>
+
+          {/* Layout Toggle */}
+          <div className="flex items-center bg-gray-700 rounded">
+            <button
+              onClick={() => setLayoutMode('horizontal')}
+              className={`px-3 py-1 text-sm ${layoutMode === 'horizontal' ? 'bg-gray-600 text-white' : 'text-gray-400'} rounded-l transition-colors`}
+            >
+              ⬌
+            </button>
+            <button
+              onClick={() => setLayoutMode('vertical')}
+              className={`px-3 py-1 text-sm ${layoutMode === 'vertical' ? 'bg-gray-600 text-white' : 'text-gray-400'} rounded-r transition-colors`}
+            >
+              ⬍
+            </button>
+          </div>
+
+          {/* Console Toggle */}
+          <button
+            onClick={() => setShowConsole(!showConsole)}
+            className={`px-3 py-1 text-sm rounded ${showConsole ? 'bg-gray-600 text-white' : 'bg-gray-700 text-gray-400'}`}
+          >
+            Console
+          </button>
+
+          {/* Theme Selector */}
+          <select
+            value={editorTheme}
+            onChange={(e) => setEditorTheme(e.target.value)}
+            className="bg-gray-700 text-white text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none"
+          >
+            <optgroup label="Popular Themes">
+              <option value="dracula">🧛 Dracula</option>
+              <option value="monokai">🎨 Monokai</option>
+              <option value="tokyo-night">🌃 Tokyo Night</option>
+              <option value="cobalt2">💎 Cobalt2</option>
+              <option value="one-dark">🔵 One Dark</option>
+              <option value="synthwave">🌆 SynthWave</option>
+              <option value="night-owl">🦉 Night Owl</option>
+              <option value="github-dark">🐙 GitHub Dark</option>
+              <option value="material">🎭 Material</option>
+              <option value="nord">❄️ Nord</option>
+              <option value="palenight">🌙 Palenight</option>
+            </optgroup>
+            <optgroup label="Light Themes">
+              <option value="vs">☀️ Light</option>
+              <option value="github-light">🐱 GitHub Light</option>
+              <option value="solarized-light">🌞 Solarized Light</option>
+              <option value="ayu-light">🌿 Ayu Light</option>
+            </optgroup>
+            <optgroup label="Dark Themes">
+              <option value="vs-dark">🌑 VS Dark</option>
+              <option value="solarized-dark">🌒 Solarized Dark</option>
+              <option value="ayu-dark">🍃 Ayu Dark</option>
+            </optgroup>
+            <optgroup label="High Contrast">
+              <option value="hc-black">⚫ High Contrast Dark</option>
+              <option value="hc-light">⚪ High Contrast Light</option>
+            </optgroup>
+          </select>
+
+          {/* Download Button */}
+          <button
+            onClick={downloadCode}
+            className="text-gray-400 hover:text-white transition-colors"
+            title="Download HTML file"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className={`flex-1 flex ${layoutMode === 'vertical' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
+        {/* Editor Section */}
+        <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-gray-900`}>
+          {/* Editor Tabs */}
+          <div className="bg-gray-800 flex items-center px-2 border-b border-gray-700">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                  activeTab === tab.key
+                    ? 'bg-gray-900 text-white border-b-2 border-blue-500'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                <span className={tab.color}>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Monaco Editor */}
+          <div className="flex-1 overflow-hidden">
+            <Editor
+              height="100%"
+              language={activeTab}
+              value={code[activeTab]}
+              theme={editorTheme}
+              onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
+              onMount={handleEditorMount}
+              options={{
+                minimap: { enabled: false },
+                fontSize: fontSize,
+                lineNumbers: 'on',
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: 2,
+                wordWrap: 'on',
+                padding: { top: 10, bottom: 10 },
+                fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace",
+                fontLigatures: true,
+                renderLineHighlight: 'all',
+                cursorBlinking: 'smooth',
+                smoothScrolling: true
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Output Section */}
+        <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-white`}>
+          {/* Output Header */}
+          <div className="bg-gray-100 px-4 py-2 border-b border-gray-300 flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Output</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-gray-600">Live Preview</span>
             </div>
           </div>
 
-          {/* Output Panel - Adjusts in fullscreen */}
-          <div className={`${isFullscreen ? 'flex flex-col h-full' : 'space-y-6'}`}>
-            {/* Preview - Expands in fullscreen */}
-            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden ${isFullscreen ? 'flex-1 flex flex-col' : ''}`}>
-              <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
-              </div>
-              <iframe
-                ref={iframeRef}
-                className={`w-full bg-white ${isFullscreen ? 'flex-1' : ''}`}
-                style={{ height: isFullscreen ? '100%' : '400px' }}
-                title="Preview"
-                sandbox="allow-scripts"
-              />
-            </div>
-            
-            {/* Console - Expands in fullscreen */}
-            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden ${isFullscreen ? 'h-1/3' : ''}`}>
-              <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Console ({consoleOutput.length})
-                </h3>
-                <button 
+          {/* Preview iframe */}
+          <div className={`flex-1 ${showConsole ? 'h-2/3' : 'h-full'}`}>
+            <iframe
+              ref={iframeRef}
+              className="w-full h-full bg-white"
+              title="Preview"
+              sandbox="allow-scripts allow-modals allow-forms"
+            />
+          </div>
+
+          {/* Console */}
+          {showConsole && (
+            <div className="h-1/3 flex flex-col border-t border-gray-300">
+              <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-300">Console</span>
+                <button
                   onClick={clearConsole}
-                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
                 >
                   Clear
                 </button>
               </div>
-              <div 
-                className="p-4 bg-gray-900 text-green-400 font-mono text-sm overflow-y-auto" 
-                style={{ height: isFullscreen ? 'calc(100% - 45px)' : '200px' }}
-              >
+              <div className="flex-1 bg-gray-900 p-3 overflow-y-auto font-mono text-xs">
                 {consoleOutput.length === 0 ? (
                   <div className="text-gray-500">Console output will appear here...</div>
                 ) : (
@@ -1331,15 +812,29 @@ console.log('All event listeners attached successfully!');`
                     <div key={i} className={`mb-1 ${
                       log.method === 'error' ? 'text-red-400' :
                       log.method === 'warn' ? 'text-yellow-400' :
-                      'text-green-400'
+                      log.method === 'info' ? 'text-blue-400' :
+                      'text-gray-300'
                     }`}>
-                      [{log.timestamp}] {log.args.join(' ')}
+                      <span className="text-gray-500">[{log.timestamp}]</span> {log.args.join(' ')}
                     </div>
                   ))
                 )}
               </div>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status Bar */}
+      <div className="bg-gray-800 border-t border-gray-700 px-4 py-1 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-4">
+          <span className="text-gray-400">Ready</span>
+          <span className="text-gray-400">UTF-8</span>
+          <span className="text-gray-400">JavaScript</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-400">Ln 1, Col 1</span>
+          <span className="text-gray-400">Spaces: 2</span>
         </div>
       </div>
     </div>
