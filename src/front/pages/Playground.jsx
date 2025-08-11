@@ -925,4 +925,5 @@ console.log('✅ Dashboard ready!');`
   );
 };
 
+export { Playground };
 export default Playground;
