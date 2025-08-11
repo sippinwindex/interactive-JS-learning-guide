@@ -859,6 +859,264 @@ updateClock(); // Initial call`
     }
   };
 
+  // Load HTML template
+  const loadTemplate = () => {
+    setCode({
+      html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website</title>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Website</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="home">
+            <h2>Home Section</h2>
+            <p>This is the home section content.</p>
+            <button id="myButton">Click Me!</button>
+        </section>
+        
+        <section id="about">
+            <h2>About Section</h2>
+            <p>Learn more about us here.</p>
+        </section>
+        
+        <section id="contact">
+            <h2>Contact Section</h2>
+            <form>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                
+                <button type="submit">Send Message</button>
+            </form>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 My Website. All rights reserved.</p>
+    </footer>
+</body>
+</html>`,
+      css: `/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+}
+
+/* Header Styles */
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Navigation */
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+nav a:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Main Content */
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 20px;
+}
+
+section {
+    background: white;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+/* Button Styles */
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #5569d8;
+}
+
+/* Form Styles */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+label {
+    font-weight: bold;
+    color: #555;
+}
+
+input, textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Footer */
+footer {
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    main {
+        padding: 0 10px;
+    }
+}`,
+      javascript: `// JavaScript code for interactivity
+console.log('Website loaded successfully!');
+
+// Get DOM elements
+const button = document.getElementById('myButton');
+const form = document.querySelector('form');
+
+// Button click handler
+button.addEventListener('click', function() {
+    alert('Hello! You clicked the button!');
+    console.log('Button was clicked at:', new Date().toLocaleTimeString());
+});
+
+// Form submission handler
+form.addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent actual form submission
+    
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const message = document.getElementById('message').value;
+    
+    console.log('Form submitted with:', {
+        name: name,
+        email: email,
+        message: message
+    });
+    
+    alert(\`Thank you, \${name}! Your message has been received.\`);
+    
+    // Reset form
+    form.reset();
+});
+
+// Smooth scrolling for navigation links
+document.querySelectorAll('nav a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetSection = document.getElementById(targetId);
+        
+        if (targetSection) {
+            targetSection.scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+    });
+});
+
+// Add some dynamic content
+const homeSection = document.querySelector('#home p');
+homeSection.innerHTML += ' <strong>This text was added with JavaScript!</strong>';
+
+console.log('All event listeners attached successfully!');`
+    });
+    setTimeout(runCode, 100);
+    console.log('HTML template loaded');
+  };
+
+  // Clear all code
+  const clearAll = () => {
+    const confirmClear = window.confirm('Are you sure you want to clear all code? This cannot be undone.');
+    if (confirmClear) {
+      setCode({
+        html: '',
+        css: '',
+        javascript: ''
+      });
+      setConsoleOutput([]);
+      console.log('All code cleared');
+      setTimeout(runCode, 100);
+    }
+  };
+
   const clearConsole = () => setConsoleOutput([]);
 
   const tabs = [
@@ -889,6 +1147,20 @@ updateClock(); // Initial call`
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 📚 Examples
+              </button>
+              <button
+                onClick={loadTemplate}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="Load HTML template"
+              >
+                📄 Template
+              </button>
+              <button
+                onClick={clearAll}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                title="Clear all code"
+              >
+                🗑️ Clear
               </button>
               <button
                 onClick={toggleFullscreen}
