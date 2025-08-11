@@ -11,9 +11,7 @@
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       runCode();
     });
-  };import React, { useState, useEffect, useRef } from 'react';
-import Editor from '@monaco-editor/react';
-import { themeList, defineCustomThemes } from './MonacoThemes';
+  };
 
 const Playground = () => {
   // Professional templates for learning
