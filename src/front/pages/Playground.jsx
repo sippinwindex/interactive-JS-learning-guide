@@ -1,26 +1,15 @@
-// Monaco editor mount handler
-  const handleEditorMount = (editor, monaco) => {
-    // Define all custom themes
-    defineCustomThemes(monaco);
-    
-    // Add VS Code keybindings
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-      console.log('💾 Code saved (Ctrl+S)');
-    });
-    
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      runCode();
-    });
-  };
+import React, { useState, useEffect, useRef } from 'react';
+import Editor from '@monaco-editor/react';
 
-const Playground = () => {
+// Export as named export for routes.jsx
+// Component definition with proper export
+const Playground = ({ navigateTo, isDarkMode = false }) => {
   // Professional templates for learning
   const templates = {
     welcome: {
       name: '👋 Welcome Tutorial',
       description: 'Start here to learn the basics',
-      html: `<!-- Welcome to the VS Code-like Playground! -->
-<!DOCTYPE html>
+      html: `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -36,7 +25,6 @@ const Playground = () => {
             <li>🎨 Syntax highlighting</li>
             <li>🔍 Error detection</li>
             <li>⚡ Auto-completion</li>
-            <li>📝 Multi-cursor editing (Alt+Click)</li>
         </ul>
         
         <button id="startBtn" class="start-button">
@@ -47,8 +35,7 @@ const Playground = () => {
     </div>
 </body>
 </html>`,
-      css: `/* VS Code-like Playground Styles */
-* {
+      css: `* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -71,18 +58,6 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     max-width: 600px;
     width: 100%;
-    animation: slideIn 0.5s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 h1 {
@@ -90,25 +65,6 @@ h1 {
     margin-bottom: 20px;
     font-size: 2.5rem;
     text-align: center;
-}
-
-ul {
-    list-style: none;
-    padding: 20px 0;
-}
-
-li {
-    padding: 10px;
-    margin: 5px 0;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #667eea;
-    transition: transform 0.2s;
-}
-
-li:hover {
-    transform: translateX(10px);
-    background: #e9ecef;
 }
 
 .start-button {
@@ -128,353 +84,17 @@ li:hover {
 .start-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-}
-
-.start-button:active {
-    transform: translateY(0);
-}
-
-.output-area {
-    margin-top: 20px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    min-height: 100px;
-    display: none;
-    animation: fadeIn 0.3s ease-out;
-}
-
-.output-area.show {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.success-message {
-    color: #28a745;
-    font-size: 1.2rem;
-    font-weight: bold;
 }`,
-      javascript: `// Welcome to the VS Code-like JavaScript editor!
-// You get IntelliSense, error checking, and more!
+      javascript: `console.log('🚀 VS Code Playground Ready!');
 
-console.log('🚀 VS Code Playground Initialized!');
-console.log('💡 Try typing "document." and see the IntelliSense!');
-
-// Get DOM elements
 const button = document.getElementById('startBtn');
 const output = document.getElementById('output');
 
-// Track learning progress
-let clickCount = 0;
-const lessons = [
-    '🎯 Great! You clicked the button!',
-    '📚 Now try modifying the code above',
-    '✏️ Change the button text in the HTML',
-    '🎨 Try changing colors in the CSS',
-    '⚡ Add a new console.log() statement',
-    '🏆 Excellent! You are learning fast!'
-];
-
-// Add event listener with IntelliSense support
-button?.addEventListener('click', function(event) {
-    // Show output area
-    output.classList.add('show');
-    
-    // Display progressive messages
-    const message = lessons[Math.min(clickCount, lessons.length - 1)];
-    
-    output.innerHTML = \`
-        <div class="success-message">
-            \${message}
-        </div>
-        <p>Click count: \${clickCount + 1}</p>
-        <p>Timestamp: \${new Date().toLocaleTimeString()}</p>
-    \`;
-    
-    // Animate button
-    this.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-        this.style.transform = 'scale(1)';
-    }, 200);
-    
-    clickCount++;
-    
-    // Log to console (check the console panel!)
-    console.log('Button clicked!', {
-        count: clickCount,
-        message: message,
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Demonstrate IntelliSense with different types
-const student = {
-    name: 'New Coder',
-    level: 1,
-    skills: ['HTML', 'CSS', 'JavaScript'],
-    
-    // Method with JSDoc comment for IntelliSense
-    /**
-     * Level up the student
-     * @param {string} newSkill - The new skill learned
-     * @returns {number} The new level
-     */
-    levelUp(newSkill) {
-        this.skills.push(newSkill);
-        this.level++;
-        console.log(\`🎉 Leveled up to \${this.level}! New skill: \${newSkill}\`);
-        return this.level;
-    }
-};
-
-// Try typing "student." to see IntelliSense suggestions!
-console.log('Student profile:', student);
-
-// Demonstrate error detection - uncomment the line below to see an error
-// console.log(undefinedVariable);
-
-// Pro tip: Try these shortcuts:
-// - Ctrl+Space: Trigger IntelliSense
-// - F1: Command palette
-// - Ctrl+/: Toggle comment
-// - Alt+Shift+F: Format document
-// - Ctrl+D: Select next occurrence`
-    },
-    interactive: {
-      name: '🎮 Interactive App',
-      description: 'Build an interactive web application',
-      html: `<div class="app">
-    <header class="app-header">
-        <h1>🎮 Interactive Dashboard</h1>
-        <div class="stats">
-            <div class="stat-card">
-                <span class="stat-value" id="score">0</span>
-                <span class="stat-label">Score</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value" id="level">1</span>
-                <span class="stat-label">Level</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value" id="time">00:00</span>
-                <span class="stat-label">Time</span>
-            </div>
-        </div>
-    </header>
-
-    <main class="app-main">
-        <div class="control-panel">
-            <input type="text" id="nameInput" placeholder="Enter your name..." class="input-field">
-            <button id="actionBtn" class="action-btn">Start Game</button>
-        </div>
-
-        <div class="game-area" id="gameArea">
-            <canvas id="canvas" width="600" height="400"></canvas>
-        </div>
-
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressBar"></div>
-        </div>
-    </main>
-</div>`,
-      css: `.app {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.app-header {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.app-header h1 {
-    margin: 0 0 20px 0;
-    font-size: 2.5rem;
-    text-align: center;
-}
-
-.stats {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-}
-
-.stat-card {
-    background: rgba(255,255,255,0.2);
-    padding: 15px 25px;
-    border-radius: 10px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-    transition: transform 0.3s;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255,255,255,0.3);
-}
-
-.stat-value {
-    display: block;
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.app-main {
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-.control-panel {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.input-field {
-    flex: 1;
-    padding: 12px 20px;
-    font-size: 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    transition: border-color 0.3s;
-}
-
-.input-field:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.action-btn {
-    padding: 12px 30px;
-    font-size: 16px;
-    font-weight: bold;
-    color: white;
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-}
-
-#canvas {
-    background: white;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.progress-bar {
-    height: 30px;
-    background: #e0e0e0;
-    border-radius: 15px;
-    overflow: hidden;
-    position: relative;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-    width: 0%;
-    transition: width 0.3s ease;
-}`,
-      javascript: `// Interactive Dashboard Demo
-console.log('🎮 Interactive Dashboard Loading...');
-
-// Game state
-const gameState = {
-    score: 0,
-    level: 1,
-    isPlaying: false,
-    playerName: '',
-    startTime: null
-};
-
-// DOM Elements
-const elements = {
-    scoreEl: document.getElementById('score'),
-    levelEl: document.getElementById('level'),
-    timeEl: document.getElementById('time'),
-    nameInput: document.getElementById('nameInput'),
-    actionBtn: document.getElementById('actionBtn'),
-    progressBar: document.getElementById('progressBar'),
-    canvas: document.getElementById('canvas'),
-    ctx: document.getElementById('canvas')?.getContext('2d')
-};
-
-// Initialize canvas
-function initCanvas() {
-    const { canvas, ctx } = elements;
-    if (!ctx) return;
-    
-    // Draw welcome message
-    ctx.fillStyle = '#667eea';
-    ctx.font = 'bold 24px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🎮 Ready to Play!', canvas.width / 2, canvas.height / 2);
-}
-
-// Handle canvas click
-elements.canvas?.addEventListener('click', (e) => {
-    if (!gameState.isPlaying) return;
-    
-    // Update score
-    gameState.score += 10;
-    elements.scoreEl.textContent = gameState.score;
-    
-    // Update progress
-    const progress = (gameState.score % 100);
-    elements.progressBar.style.width = progress + '%';
-    
-    // Level up every 100 points
-    if (gameState.score % 100 === 0) {
-        gameState.level++;
-        elements.levelEl.textContent = gameState.level;
-    }
-});
-
-// Start/Stop game
-elements.actionBtn?.addEventListener('click', () => {
-    if (!gameState.isPlaying) {
-        gameState.playerName = elements.nameInput.value || 'Player';
-        gameState.isPlaying = true;
-        gameState.startTime = Date.now();
-        elements.actionBtn.textContent = 'Stop Game';
-        console.log(\`🎮 Game started for \${gameState.playerName}!\`);
-    } else {
-        gameState.isPlaying = false;
-        elements.actionBtn.textContent = 'Start Game';
-        console.log('Game stopped!');
-    }
-});
-
-// Initialize
-initCanvas();
-console.log('✅ Dashboard ready!');`
+button?.addEventListener('click', function() {
+    output.style.display = 'block';
+    output.innerHTML = '<h3>🎉 Great job! You clicked the button!</h3>';
+    console.log('Button clicked!');
+});`
     }
   };
 
@@ -488,49 +108,10 @@ console.log('✅ Dashboard ready!');`
   const [autoRun, setAutoRun] = useState(true);
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState('welcome');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [splitView, setSplitView] = useState('vertical'); // vertical or horizontal
-  const [showConsole, setShowConsole] = useState(true);
-  const [editorTheme, setEditorTheme] = useState('dracula');
+  const [editorTheme, setEditorTheme] = useState('vs-dark');
   
   const iframeRef = useRef(null);
   const runTimeoutRef = useRef(null);
-  const containerRef = useRef(null);
-
-  // Monaco Editor configuration
-  const editorOptions = {
-    fontSize: 14,
-    fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
-    fontLigatures: true,
-    quickSuggestions: true,
-    parameterHints: { enabled: true },
-    suggestOnTriggerCharacters: true,
-    acceptSuggestionOnEnter: "on",
-    tabCompletion: "on",
-    wordBasedSuggestions: true,
-    minimap: { enabled: true },
-    scrollBeyondLastLine: false,
-    wordWrap: "on",
-    lineNumbers: "on",
-    renderLineHighlight: "all",
-    formatOnPaste: true,
-    formatOnType: true,
-    autoIndent: "full",
-    autoClosingBrackets: "always",
-    autoClosingQuotes: "always",
-    bracketPairColorization: { enabled: true },
-    scrollbar: {
-      verticalScrollbarSize: 10,
-      horizontalScrollbarSize: 10,
-      useShadows: false
-    },
-    mouseWheelZoom: true,
-    smoothScrolling: true,
-    cursorBlinking: "smooth",
-    cursorSmoothCaretAnimation: true,
-    automaticLayout: true
-  };
 
   const runCode = () => {
     if (!iframeRef.current) return;
@@ -544,18 +125,10 @@ console.log('✅ Dashboard ready!');`
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      margin: 0; 
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    ${code.css}
-  </style>
+  <style>${code.css}</style>
 </head>
 <body>
-  ${code.html.replace(/<\/?html[^>]*>/gi, '').replace(/<\/?head[^>]*>/gi, '').replace(/<\/?body[^>]*>/gi, '').replace(/<title[^>]*>.*?<\/title>/gi, '')}
+  ${code.html}
   <script>
     const originalConsole = { ...console };
     
@@ -578,22 +151,17 @@ console.log('✅ Dashboard ready!');`
       }, '*');
     }
     
-    ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
+    ['log', 'error', 'warn', 'info'].forEach(method => {
       console[method] = function(...args) {
         sendToParent(method, args);
         originalConsole[method].apply(console, args);
       };
     });
     
-    window.onerror = function(msg, url, lineNo, columnNo, error) {
-      console.error('Runtime Error at line ' + lineNo + ': ' + msg);
-      return false;
-    };
-    
     try {
       ${code.javascript}
     } catch (error) {
-      console.error('Execution Error:', error.message);
+      console.error('Error:', error.message);
     }
   </script>
 </body>
@@ -623,7 +191,7 @@ console.log('✅ Dashboard ready!');`
             args: event.data.args,
             timestamp
           };
-          return [...prev, newLog].slice(-200);
+          return [...prev, newLog].slice(-100);
         });
       }
     };
@@ -654,254 +222,129 @@ console.log('✅ Dashboard ready!');`
     setTimeout(runCode, 100);
   }, []);
 
-  // Fullscreen handling
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
   const clearConsole = () => setConsoleOutput([]);
 
-  const loadTemplate = (templateKey) => {
-    const template = templates[templateKey];
-    if (template) {
-      setCode({
-        html: template.html,
-        css: template.css,
-        javascript: template.javascript
-      });
-      setSelectedTemplate(templateKey);
-      clearConsole();
-    }
-  };
-
   const tabs = [
-    { key: 'html', label: 'HTML', icon: '📄', language: 'html' },
-    { key: 'css', label: 'CSS', icon: '🎨', language: 'css' },
-    { key: 'javascript', label: 'JavaScript', icon: '⚡', language: 'javascript' }
+    { key: 'html', label: 'HTML', language: 'html' },
+    { key: 'css', label: 'CSS', language: 'css' },
+    { key: 'javascript', label: 'JavaScript', language: 'javascript' }
   ];
 
   return (
-    <div 
-      ref={containerRef}
-      className={`${isFullscreen ? 'fixed inset-0 z-50' : 'min-h-screen'} bg-gray-900 text-white flex flex-col`}
-    >
-      {/* VS Code-like Header */}
-      <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
-        <div className="flex items-center justify-between p-2">
-          <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold flex items-center gap-2">
-              <span className="text-2xl">🚀</span>
-              VS Code Playground
-            </h1>
-            {isRunning && (
-              <span className="text-xs px-2 py-1 bg-green-600 rounded animate-pulse">
-                RUNNING
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Template Selector */}
-            <select 
-              value={selectedTemplate}
-              onChange={(e) => loadTemplate(e.target.value)}
-              className="bg-gray-700 text-sm px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
-            >
-              {Object.entries(templates).map(([key, template]) => (
-                <option key={key} value={key}>
-                  {template.name}
-                </option>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            🚀 VS Code Playground
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Write HTML, CSS, and JavaScript with live preview
+          </p>
+        </div>
+
+        {/* Main Editor Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Editor Panel */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
               ))}
-            </select>
+            </div>
             
-            {/* Theme Selector */}
-            <select 
-              value={editorTheme}
-              onChange={(e) => setEditorTheme(e.target.value)}
-              className="bg-gray-700 text-sm px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
-              title="Select Editor Theme"
-            >
-              <optgroup label="Popular Themes">
-                <option value="dracula">🧛 Dracula</option>
-                <option value="monokai">🎨 Monokai Pro</option>
-                <option value="cobalt2">💎 Cobalt2</option>
-                <option value="tokyo-night">🌃 Tokyo Night</option>
-                <option value="one-dark">🔵 One Dark Pro</option>
-                <option value="material">🎭 Material Theme</option>
-                <option value="synthwave">🌆 SynthWave '84</option>
-                <option value="night-owl">🦉 Night Owl</option>
-              </optgroup>
-              <optgroup label="Light Themes">
-                <option value="vs">☀️ Light (Visual Studio)</option>
-                <option value="github-light">🐱 GitHub Light</option>
-                <option value="solarized-light">🌞 Solarized Light</option>
-                <option value="ayu-light">🌿 Ayu Light</option>
-              </optgroup>
-              <optgroup label="Dark Themes">
-                <option value="vs-dark">🌑 Dark (Visual Studio)</option>
-                <option value="github-dark">🐙 GitHub Dark</option>
-                <option value="nord">❄️ Nord</option>
-                <option value="palenight">🌙 Palenight</option>
-                <option value="solarized-dark">🌒 Solarized Dark</option>
-                <option value="ayu-dark">🍃 Ayu Dark</option>
-              </optgroup>
-              <optgroup label="High Contrast">
-                <option value="hc-black">⚫ High Contrast Black</option>
-                <option value="hc-light">⚪ High Contrast Light</option>
-              </optgroup>
-            </select>
-            
-            {/* Auto-run Toggle */}
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input 
-                type="checkbox"
-                checked={autoRun}
-                onChange={(e) => setAutoRun(e.target.checked)}
-                className="rounded cursor-pointer"
+            {/* Monaco Editor */}
+            <div style={{ height: '500px' }}>
+              <Editor
+                height="100%"
+                language={tabs.find(t => t.key === activeTab)?.language}
+                value={code[activeTab]}
+                theme={editorTheme}
+                onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  wordWrap: 'on',
+                  automaticLayout: true
+                }}
               />
-              Auto-run
-            </label>
-            
-            {/* View Options */}
-            <div className="flex items-center gap-1 bg-gray-700 rounded p-1">
-              <button
-                onClick={() => setSplitView('vertical')}
-                className={`p-1 rounded ${splitView === 'vertical' ? 'bg-gray-600' : ''}`}
-                title="Vertical Split"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="2" y="2" width="7" height="16" />
-                  <rect x="11" y="2" width="7" height="16" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setSplitView('horizontal')}
-                className={`p-1 rounded ${splitView === 'horizontal' ? 'bg-gray-600' : ''}`}
-                title="Horizontal Split"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="2" y="2" width="16" height="7" />
-                  <rect x="2" y="11" width="16" height="7" />
-                </svg>
-              </button>
             </div>
             
-            {/* Console Toggle */}
-            <button
-              onClick={() => setShowConsole(!showConsole)}
-              className="p-1 hover:bg-gray-700 rounded"
-              title="Toggle Console"
-            >
-              📋
-            </button>
-            
-            {/* Run Button */}
-            <button 
-              onClick={runCode}
-              className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors flex items-center gap-2"
-            >
-              ▶ Run
-            </button>
-            
-            {/* Fullscreen Button */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-1 hover:bg-gray-700 rounded"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? '🗗' : '⛶'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className={`flex-1 flex ${splitView === 'horizontal' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
-        {/* Editor Panel */}
-        <div className={`${splitView === 'horizontal' ? 'h-1/2' : 'w-1/2'} border-r border-gray-700 flex flex-col`}>
-          {/* File Tabs */}
-          <div className="bg-gray-800 flex border-b border-gray-700 flex-shrink-0">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 border-r border-gray-700 ${
-                  activeTab === tab.key
-                    ? 'bg-gray-900 text-white border-t-2 border-t-blue-500'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          
-          {/* Monaco Editor */}
-          <div className="flex-1 overflow-hidden">
-            <Editor
-              height="100%"
-              language={tabs.find(t => t.key === activeTab)?.language}
-              value={code[activeTab]}
-              theme={editorTheme}
-              onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
-              onMount={handleEditorMount}
-              options={editorOptions}
-              loading={
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <div>Loading VS Code Editor...</div>
-                  </div>
-                </div>
-              }
-            />
-          </div>
-        </div>
-
-        {/* Output Panel */}
-        <div className={`${splitView === 'horizontal' ? 'h-1/2' : 'w-1/2'} flex flex-col`}>
-          {/* Preview */}
-          <div className={`${showConsole ? 'flex-1' : 'h-full'} flex flex-col`}>
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-medium flex-shrink-0">
-              👁️ Preview
+            {/* Controls */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <label className="flex items-center gap-2 text-sm">
+                <input 
+                  type="checkbox"
+                  checked={autoRun}
+                  onChange={(e) => setAutoRun(e.target.checked)}
+                  className="rounded"
+                />
+                Auto-run
+              </label>
+              
+              <div className="flex items-center gap-3">
+                <select 
+                  value={editorTheme}
+                  onChange={(e) => setEditorTheme(e.target.value)}
+                  className="text-sm px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                >
+                  <option value="vs-dark">Dark Theme</option>
+                  <option value="vs">Light Theme</option>
+                  <option value="hc-black">High Contrast</option>
+                </select>
+                
+                <button 
+                  onClick={runCode}
+                  className="px-4 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+                >
+                  ▶ Run Code
+                </button>
+              </div>
             </div>
-            <iframe
-              ref={iframeRef}
-              className="flex-1 bg-white"
-              title="Preview"
-              sandbox="allow-scripts"
-            />
           </div>
-          
-          {/* Console */}
-          {showConsole && (
-            <div className="h-48 flex flex-col border-t border-gray-700">
-              <div className="bg-gray-800 px-4 py-2 flex justify-between items-center text-sm flex-shrink-0">
-                <span>Console ({consoleOutput.length})</span>
+
+          {/* Output Panel */}
+          <div className="space-y-6">
+            {/* Preview */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
+              </div>
+              <iframe
+                ref={iframeRef}
+                className="w-full bg-white"
+                style={{ height: '400px' }}
+                title="Preview"
+                sandbox="allow-scripts"
+              />
+            </div>
+            
+            {/* Console */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Console ({consoleOutput.length})
+                </h3>
                 <button 
                   onClick={clearConsole}
-                  className="text-gray-400 hover:text-white"
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   Clear
                 </button>
               </div>
-              <div className="flex-1 bg-gray-950 p-3 overflow-y-auto font-mono text-sm">
+              <div className="p-4 bg-gray-900 text-green-400 font-mono text-sm" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                 {consoleOutput.length === 0 ? (
                   <div className="text-gray-500">Console output will appear here...</div>
                 ) : (
@@ -909,21 +352,20 @@ console.log('✅ Dashboard ready!');`
                     <div key={i} className={`mb-1 ${
                       log.method === 'error' ? 'text-red-400' :
                       log.method === 'warn' ? 'text-yellow-400' :
-                      log.method === 'info' ? 'text-blue-400' :
-                      'text-gray-300'
+                      'text-green-400'
                     }`}>
-                      <span className="text-gray-500">[{log.timestamp}]</span> {log.args.join(' ')}
+                      [{log.timestamp}] {log.args.join(' ')}
                     </div>
                   ))
                 )}
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
+// Export as named export for routes.jsx
 export { Playground };
-export default Playground;
