@@ -108,13 +108,208 @@ button?.addEventListener('click', function() {
   const [autoRun, setAutoRun] = useState(true);
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [editorTheme, setEditorTheme] = useState('vs-dark');
+  const [editorTheme, setEditorTheme] = useState('dracula');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   
   const iframeRef = useRef(null);
   const runTimeoutRef = useRef(null);
   const containerRef = useRef(null);
+  const editorRef = useRef(null);
+
+  // Define custom themes for Monaco
+  const defineCustomThemes = (monaco) => {
+    // Dracula Theme
+    monaco.editor.defineTheme('dracula', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '6272a4', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'ff79c6' },
+        { token: 'string', foreground: 'f1fa8c' },
+        { token: 'number', foreground: 'bd93f9' },
+        { token: 'function', foreground: '50fa7b' },
+        { token: 'variable', foreground: 'f8f8f2' },
+        { token: 'tag', foreground: 'ff79c6' },
+        { token: 'attribute.name', foreground: '50fa7b' },
+        { token: 'attribute.value', foreground: 'f1fa8c' }
+      ],
+      colors: {
+        'editor.background': '#282a36',
+        'editor.foreground': '#f8f8f2',
+        'editor.lineHighlightBackground': '#44475a',
+        'editor.selectionBackground': '#44475a',
+        'editorCursor.foreground': '#f8f8f2',
+        'editorLineNumber.foreground': '#6272a4'
+      }
+    });
+
+    // Monokai Theme
+    monaco.editor.defineTheme('monokai', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '75715e', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'f92672' },
+        { token: 'string', foreground: 'e6db74' },
+        { token: 'number', foreground: 'ae81ff' },
+        { token: 'function', foreground: 'a6e22e' },
+        { token: 'variable', foreground: 'f8f8f2' },
+        { token: 'type', foreground: '66d9ef' }
+      ],
+      colors: {
+        'editor.background': '#2d2a2e',
+        'editor.foreground': '#fcfcfa',
+        'editor.lineHighlightBackground': '#3e3d42',
+        'editor.selectionBackground': '#535155',
+        'editorCursor.foreground': '#fcfcfa',
+        'editorLineNumber.foreground': '#90908a'
+      }
+    });
+
+    // Tokyo Night Theme
+    monaco.editor.defineTheme('tokyo-night', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '565f89', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '9d7cd8' },
+        { token: 'string', foreground: '9ece6a' },
+        { token: 'number', foreground: 'ff9e64' },
+        { token: 'function', foreground: '7aa2f7' },
+        { token: 'variable', foreground: 'c0caf5' }
+      ],
+      colors: {
+        'editor.background': '#1a1b26',
+        'editor.foreground': '#a9b1d6',
+        'editor.lineHighlightBackground': '#24283b',
+        'editor.selectionBackground': '#364a82',
+        'editorCursor.foreground': '#c0caf5',
+        'editorLineNumber.foreground': '#3b4261'
+      }
+    });
+
+    // Cobalt2 Theme
+    monaco.editor.defineTheme('cobalt2', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '0088ff', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'ff9d00' },
+        { token: 'string', foreground: '3ad900' },
+        { token: 'number', foreground: 'ff628c' },
+        { token: 'function', foreground: 'ffee80' },
+        { token: 'variable', foreground: 'ffffff' }
+      ],
+      colors: {
+        'editor.background': '#193549',
+        'editor.foreground': '#ffffff',
+        'editor.lineHighlightBackground': '#1f4662',
+        'editor.selectionBackground': '#0050a4',
+        'editorCursor.foreground': '#ffc600',
+        'editorLineNumber.foreground': '#0088ff'
+      }
+    });
+
+    // GitHub Dark Theme
+    monaco.editor.defineTheme('github-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '8b949e', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'ff7b72' },
+        { token: 'string', foreground: 'a5d6ff' },
+        { token: 'number', foreground: '79c0ff' },
+        { token: 'function', foreground: 'd2a8ff' },
+        { token: 'variable', foreground: 'ffa657' }
+      ],
+      colors: {
+        'editor.background': '#0d1117',
+        'editor.foreground': '#c9d1d9',
+        'editor.lineHighlightBackground': '#161b22',
+        'editor.selectionBackground': '#3392ff44',
+        'editorCursor.foreground': '#58a6ff',
+        'editorLineNumber.foreground': '#8b949e'
+      }
+    });
+
+    // One Dark Theme
+    monaco.editor.defineTheme('one-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '5c6370', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c678dd' },
+        { token: 'string', foreground: '98c379' },
+        { token: 'number', foreground: 'd19a66' },
+        { token: 'function', foreground: '61afef' },
+        { token: 'variable', foreground: 'e06c75' }
+      ],
+      colors: {
+        'editor.background': '#282c34',
+        'editor.foreground': '#abb2bf',
+        'editor.lineHighlightBackground': '#2c313c',
+        'editor.selectionBackground': '#3e4451',
+        'editorCursor.foreground': '#528bff',
+        'editorLineNumber.foreground': '#5c6370'
+      }
+    });
+
+    // SynthWave '84 Theme
+    monaco.editor.defineTheme('synthwave', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '848bbd', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'fede5d' },
+        { token: 'string', foreground: 'ff8b39' },
+        { token: 'number', foreground: 'f97e72' },
+        { token: 'function', foreground: '36f9f6' },
+        { token: 'variable', foreground: 'ff7edb' }
+      ],
+      colors: {
+        'editor.background': '#2a2139',
+        'editor.foreground': '#f0eff1',
+        'editor.lineHighlightBackground': '#34294f',
+        'editor.selectionBackground': '#463465',
+        'editorCursor.foreground': '#fede5d',
+        'editorLineNumber.foreground': '#848bbd'
+      }
+    });
+
+    // Night Owl Theme
+    monaco.editor.defineTheme('night-owl', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '637777', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c792ea' },
+        { token: 'string', foreground: 'ecc48d' },
+        { token: 'number', foreground: 'f78c6c' },
+        { token: 'function', foreground: '82aaff' },
+        { token: 'variable', foreground: 'd6deeb' }
+      ],
+      colors: {
+        'editor.background': '#011627',
+        'editor.foreground': '#d6deeb',
+        'editor.lineHighlightBackground': '#01121f',
+        'editor.selectionBackground': '#1d3b53',
+        'editorCursor.foreground': '#80a4c2',
+        'editorLineNumber.foreground': '#4b6479'
+      }
+    });
+  };
+
+  // Handle editor mount - define themes
+  const handleEditorMount = (editor, monaco) => {
+    editorRef.current = editor;
+    defineCustomThemes(monaco);
+    
+    // Add keyboard shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      runCode();
+    });
+  };
 
   const runCode = () => {
     if (!iframeRef.current) return;
@@ -767,6 +962,7 @@ updateClock(); // Initial call`
                 value={code[activeTab]}
                 theme={editorTheme}
                 onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
+                onMount={handleEditorMount}
                 options={{
                   minimap: { enabled: isFullscreen },
                   fontSize: isFullscreen ? 16 : 14,
@@ -795,9 +991,22 @@ updateClock(); // Initial call`
                   onChange={(e) => setEditorTheme(e.target.value)}
                   className="text-sm px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800"
                 >
-                  <option value="vs-dark">Dark Theme</option>
-                  <option value="vs">Light Theme</option>
-                  <option value="hc-black">High Contrast</option>
+                  <optgroup label="Popular Themes">
+                    <option value="dracula">🧛 Dracula</option>
+                    <option value="monokai">🎨 Monokai Pro</option>
+                    <option value="tokyo-night">🌃 Tokyo Night</option>
+                    <option value="cobalt2">💎 Cobalt2</option>
+                    <option value="one-dark">🔵 One Dark Pro</option>
+                    <option value="synthwave">🌆 SynthWave '84</option>
+                    <option value="night-owl">🦉 Night Owl</option>
+                    <option value="github-dark">🐙 GitHub Dark</option>
+                  </optgroup>
+                  <optgroup label="Classic Themes">
+                    <option value="vs-dark">🌑 Dark (Visual Studio)</option>
+                    <option value="vs">☀️ Light (Visual Studio)</option>
+                    <option value="hc-black">⚫ High Contrast Dark</option>
+                    <option value="hc-light">⚪ High Contrast Light</option>
+                  </optgroup>
                 </select>
                 
                 <button 
