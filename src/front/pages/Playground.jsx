@@ -1,7 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+// Monaco editor mount handler
+  const handleEditorMount = (editor, monaco) => {
+    // Define all custom themes
+    defineCustomThemes(monaco);
+    
+    // Add VS Code keybindings
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+      console.log('💾 Code saved (Ctrl+S)');
+    });
+    
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      runCode();
+    });
+  };import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import { themeList, defineCustomThemes } from './MonacoThemes';
 
-export const Playground = ({ navigateTo, isDarkMode = false }) => {
+const Playground = () => {
   // Professional templates for learning
   const templates = {
     welcome: {
@@ -369,16 +383,6 @@ console.log('Student profile:', student);
     box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
 }
 
-.game-area {
-    background: #f5f5f5;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 #canvas {
     background: white;
     border: 2px solid #e0e0e0;
@@ -399,13 +403,8 @@ console.log('Student profile:', student);
     background: linear-gradient(90deg, #4CAF50, #8BC34A);
     width: 0%;
     transition: width 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
 }`,
-      javascript: `// Interactive Dashboard with Canvas Graphics
+      javascript: `// Interactive Dashboard Demo
 console.log('🎮 Interactive Dashboard Loading...');
 
 // Game state
@@ -414,8 +413,7 @@ const gameState = {
     level: 1,
     isPlaying: false,
     playerName: '',
-    startTime: null,
-    particles: []
+    startTime: null
 };
 
 // DOM Elements
@@ -430,37 +428,7 @@ const elements = {
     ctx: document.getElementById('canvas')?.getContext('2d')
 };
 
-// Particle class for visual effects
-class Particle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.vx = (Math.random() - 0.5) * 4;
-        this.vy = (Math.random() - 0.5) * 4;
-        this.radius = Math.random() * 3 + 2;
-        this.color = color;
-        this.life = 100;
-    }
-    
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life -= 2;
-        this.radius *= 0.98;
-    }
-    
-    draw(ctx) {
-        ctx.save();
-        ctx.globalAlpha = this.life / 100;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-// Initialize canvas drawing
+// Initialize canvas
 function initCanvas() {
     const { canvas, ctx } = elements;
     if (!ctx) return;
@@ -470,551 +438,45 @@ function initCanvas() {
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('🎮 Ready to Play!', canvas.width / 2, canvas.height / 2);
-    
-    ctx.font = '16px Arial';
-    ctx.fillStyle = '#999';
-    ctx.fillText('Enter your name and click Start Game', canvas.width / 2, canvas.height / 2 + 30);
-}
-
-// Create explosion effect
-function createExplosion(x, y) {
-    const colors = ['#667eea', '#764ba2', '#4CAF50', '#FF9800', '#F44336'];
-    for (let i = 0; i < 20; i++) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        gameState.particles.push(new Particle(x, y, color));
-    }
-}
-
-// Animation loop
-function animate() {
-    const { canvas, ctx } = elements;
-    if (!ctx || !gameState.isPlaying) return;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw and update particles
-    gameState.particles = gameState.particles.filter(particle => {
-        particle.update();
-        particle.draw(ctx);
-        return particle.life > 0;
-    });
-    
-    // Draw game elements
-    drawGame();
-    
-    // Continue animation
-    requestAnimationFrame(animate);
-}
-
-// Draw game elements
-function drawGame() {
-    const { canvas, ctx } = elements;
-    if (!ctx) return;
-    
-    // Draw player info
-    ctx.fillStyle = '#333';
-    ctx.font = 'bold 20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(\`Player: \${gameState.playerName}\`, 20, 30);
-    
-    // Draw interactive circles
-    const time = Date.now() * 0.001;
-    for (let i = 0; i < 5; i++) {
-        const x = (canvas.width / 6) * (i + 1);
-        const y = canvas.height / 2 + Math.sin(time + i) * 50;
-        const radius = 20 + Math.sin(time * 2 + i) * 10;
-        
-        ctx.fillStyle = \`hsl(\${(time * 50 + i * 60) % 360}, 70%, 50%)\`;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    // Add instructions
-    ctx.fillStyle = '#999';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Click on the circles to score points!', canvas.width / 2, canvas.height - 20);
 }
 
 // Handle canvas click
 elements.canvas?.addEventListener('click', (e) => {
     if (!gameState.isPlaying) return;
     
-    const rect = elements.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Create explosion at click position
-    createExplosion(x, y);
-    
     // Update score
     gameState.score += 10;
     elements.scoreEl.textContent = gameState.score;
     
     // Update progress
-    updateProgress();
+    const progress = (gameState.score % 100);
+    elements.progressBar.style.width = progress + '%';
     
     // Level up every 100 points
     if (gameState.score % 100 === 0) {
         gameState.level++;
         elements.levelEl.textContent = gameState.level;
-        console.log(\`🎉 Level Up! Now at level \${gameState.level}\`);
     }
-    
-    console.log(\`Click at (\${Math.round(x)}, \${Math.round(y)}) - Score: \${gameState.score}\`);
 });
-
-// Update progress bar
-function updateProgress() {
-    const progress = (gameState.score % 100);
-    elements.progressBar.style.width = progress + '%';
-    elements.progressBar.textContent = progress + '%';
-}
-
-// Timer update
-function updateTimer() {
-    if (!gameState.isPlaying || !gameState.startTime) return;
-    
-    const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
-    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-    const seconds = (elapsed % 60).toString().padStart(2, '0');
-    elements.timeEl.textContent = \`\${minutes}:\${seconds}\`;
-}
 
 // Start/Stop game
 elements.actionBtn?.addEventListener('click', () => {
     if (!gameState.isPlaying) {
-        // Start game
         gameState.playerName = elements.nameInput.value || 'Player';
         gameState.isPlaying = true;
         gameState.startTime = Date.now();
         elements.actionBtn.textContent = 'Stop Game';
-        elements.actionBtn.style.background = 'linear-gradient(135deg, #f44336, #e91e63)';
-        
         console.log(\`🎮 Game started for \${gameState.playerName}!\`);
-        animate();
-        
-        // Start timer
-        setInterval(updateTimer, 100);
     } else {
-        // Stop game
         gameState.isPlaying = false;
         elements.actionBtn.textContent = 'Start Game';
-        elements.actionBtn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-        
-        console.log('🛑 Game stopped!');
-        console.log('Final Stats:', {
-            score: gameState.score,
-            level: gameState.level,
-            player: gameState.playerName
-        });
+        console.log('Game stopped!');
     }
 });
 
 // Initialize
 initCanvas();
-console.log('✅ Dashboard ready! Enter your name and start playing!');
-
-// IntelliSense Demo - try typing these:
-// elements.
-// gameState.
-// document.
-// console.
-// Math.`
-    },
-    dataViz: {
-      name: '📊 Data Visualization',
-      description: 'Create interactive charts and graphs',
-      html: `<div class="dashboard">
-    <h1>📊 Data Analytics Dashboard</h1>
-    
-    <div class="controls">
-        <button onclick="generateData()">🔄 Generate Data</button>
-        <button onclick="animateCharts()">✨ Animate</button>
-        <select id="chartType" onchange="updateCharts()">
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-            <option value="pie">Pie Chart</option>
-        </select>
-    </div>
-    
-    <div class="charts-grid">
-        <div class="chart-container">
-            <h3>Monthly Sales</h3>
-            <canvas id="chart1"></canvas>
-        </div>
-        <div class="chart-container">
-            <h3>Categories</h3>
-            <canvas id="chart2"></canvas>
-        </div>
-    </div>
-    
-    <div class="stats-grid">
-        <div class="stat-box">
-            <div class="stat-icon">💰</div>
-            <div class="stat-value" id="revenue">$0</div>
-            <div class="stat-label">Revenue</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-icon">📈</div>
-            <div class="stat-value" id="growth">0%</div>
-            <div class="stat-label">Growth</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-icon">👥</div>
-            <div class="stat-value" id="users">0</div>
-            <div class="stat-label">Users</div>
-        </div>
-    </div>
-</div>`,
-      css: `.dashboard {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, system-ui, sans-serif;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    min-height: 100vh;
-}
-
-h1 {
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.controls button, .controls select {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: white;
-    color: #333;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.controls button:hover, .controls select:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.chart-container {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.chart-container h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-}
-
-canvas {
-    width: 100%;
-    height: 250px;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.stat-box {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
-}
-
-.stat-box:hover {
-    transform: scale(1.05);
-}
-
-.stat-icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #667eea;
-    margin: 10px 0;
-}
-
-.stat-label {
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 0.9rem;
-}`,
-      javascript: `// Data Visualization with Canvas API
-console.log('📊 Loading Data Visualization Dashboard...');
-
-// Chart data
-let chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    values: [],
-    categories: {
-        labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-        values: []
-    }
-};
-
-// Generate random data
-function generateData() {
-    // Generate sales data
-    chartData.values = Array.from({length: 6}, () => 
-        Math.floor(Math.random() * 10000) + 2000
-    );
-    
-    // Generate category data
-    chartData.categories.values = Array.from({length: 4}, () => 
-        Math.floor(Math.random() * 100) + 20
-    );
-    
-    // Update statistics
-    const totalRevenue = chartData.values.reduce((a, b) => a + b, 0);
-    const growth = Math.floor(Math.random() * 50) + 10;
-    const users = Math.floor(Math.random() * 5000) + 1000;
-    
-    document.getElementById('revenue').textContent = '$' + totalRevenue.toLocaleString();
-    document.getElementById('growth').textContent = growth + '%';
-    document.getElementById('users').textContent = users.toLocaleString();
-    
-    console.log('📊 New data generated:', chartData);
-    
-    updateCharts();
-}
-
-// Draw bar chart
-function drawBarChart(canvasId, data, labels, color = '#667eea') {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 250;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    const padding = 40;
-    const barWidth = (canvas.width - padding * 2) / data.length;
-    const maxValue = Math.max(...data);
-    const scale = (canvas.height - padding * 2) / maxValue;
-    
-    data.forEach((value, i) => {
-        const barHeight = value * scale;
-        const x = padding + i * barWidth + barWidth * 0.1;
-        const y = canvas.height - padding - barHeight;
-        const width = barWidth * 0.8;
-        
-        // Create gradient
-        const gradient = ctx.createLinearGradient(0, y, 0, canvas.height - padding);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, color + '88');
-        
-        // Draw bar
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, width, barHeight);
-        
-        // Draw value
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(value.toLocaleString(), x + width/2, y - 5);
-        
-        // Draw label
-        ctx.fillStyle = '#666';
-        ctx.font = '11px Arial';
-        ctx.fillText(labels[i], x + width/2, canvas.height - padding + 15);
-    });
-}
-
-// Draw line chart
-function drawLineChart(canvasId, data, labels, color = '#764ba2') {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 250;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    const padding = 40;
-    const maxValue = Math.max(...data);
-    const scaleY = (canvas.height - padding * 2) / maxValue;
-    const stepX = (canvas.width - padding * 2) / (data.length - 1);
-    
-    // Draw line
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    
-    data.forEach((value, i) => {
-        const x = padding + i * stepX;
-        const y = canvas.height - padding - (value * scaleY);
-        
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
-        }
-    });
-    
-    ctx.stroke();
-    
-    // Draw points
-    data.forEach((value, i) => {
-        const x = padding + i * stepX;
-        const y = canvas.height - padding - (value * scaleY);
-        
-        // Outer circle
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Inner circle
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Value
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 11px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(value.toLocaleString(), x, y - 10);
-        
-        // Label
-        ctx.fillStyle = '#666';
-        ctx.fillText(labels[i], x, canvas.height - padding + 15);
-    });
-}
-
-// Draw pie chart
-function drawPieChart(canvasId, data, labels) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 250;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = Math.min(canvas.width, canvas.height) / 3;
-    
-    const total = data.reduce((a, b) => a + b, 0);
-    const colors = ['#667eea', '#764ba2', '#4CAF50', '#FF9800'];
-    
-    let currentAngle = -Math.PI / 2;
-    
-    data.forEach((value, i) => {
-        const sliceAngle = (value / total) * Math.PI * 2;
-        
-        // Draw slice
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-        ctx.lineTo(centerX, centerY);
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.fill();
-        
-        // Draw label
-        const labelAngle = currentAngle + sliceAngle / 2;
-        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
-        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(labels[i], labelX, labelY - 5);
-        ctx.fillText(Math.round(value / total * 100) + '%', labelX, labelY + 10);
-        
-        currentAngle += sliceAngle;
-    });
-}
-
-// Update charts based on selected type
-function updateCharts() {
-    const chartType = document.getElementById('chartType').value;
-    
-    switch(chartType) {
-        case 'bar':
-            drawBarChart('chart1', chartData.values, chartData.labels);
-            drawBarChart('chart2', chartData.categories.values, chartData.categories.labels, '#4CAF50');
-            break;
-        case 'line':
-            drawLineChart('chart1', chartData.values, chartData.labels);
-            drawLineChart('chart2', chartData.categories.values, chartData.categories.labels, '#4CAF50');
-            break;
-        case 'pie':
-            drawPieChart('chart1', chartData.values, chartData.labels);
-            drawPieChart('chart2', chartData.categories.values, chartData.categories.labels);
-            break;
-    }
-    
-    console.log(\`📊 Charts updated: \${chartType}\`);
-}
-
-// Animate charts
-function animateCharts() {
-    const containers = document.querySelectorAll('.chart-container, .stat-box');
-    
-    containers.forEach((el, i) => {
-        el.style.animation = 'none';
-        setTimeout(() => {
-            el.style.animation = 'fadeInUp 0.5s ease-out';
-        }, i * 100);
-    });
-    
-    console.log('✨ Animation triggered!');
-}
-
-// Add animation CSS
-const style = document.createElement('style');
-style.textContent = \`
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-\`;
-document.head.appendChild(style);
-
-// Initialize with data
-generateData();
-
-console.log('✅ Dashboard ready! Try the buttons to interact with the charts.');
-console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and formatting!');`
+console.log('✅ Dashboard ready!');`
     }
   };
 
@@ -1029,74 +491,46 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('welcome');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [splitView, setSplitView] = useState('vertical'); // vertical or horizontal
+  const [showConsole, setShowConsole] = useState(true);
+  const [editorTheme, setEditorTheme] = useState('dracula');
   
   const iframeRef = useRef(null);
   const runTimeoutRef = useRef(null);
-  const monacoRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // Monaco Editor configuration for VS Code experience
+  // Monaco Editor configuration
   const editorOptions = {
-    // Core settings
     fontSize: 14,
     fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
     fontLigatures: true,
-    
-    // IntelliSense and suggestions
-    quickSuggestions: {
-      other: true,
-      comments: false,
-      strings: true
-    },
-    parameterHints: {
-      enabled: true
-    },
+    quickSuggestions: true,
+    parameterHints: { enabled: true },
     suggestOnTriggerCharacters: true,
     acceptSuggestionOnEnter: "on",
     tabCompletion: "on",
     wordBasedSuggestions: true,
-    
-    // Editor features
     minimap: { enabled: true },
     scrollBeyondLastLine: false,
     wordWrap: "on",
     lineNumbers: "on",
     renderLineHighlight: "all",
-    renderWhitespace: "selection",
-    
-    // Formatting
     formatOnPaste: true,
     formatOnType: true,
     autoIndent: "full",
-    
-    // Brackets
     autoClosingBrackets: "always",
     autoClosingQuotes: "always",
-    bracketPairColorization: {
-      enabled: true
-    },
-    
-    // Scrollbar
+    bracketPairColorization: { enabled: true },
     scrollbar: {
       verticalScrollbarSize: 10,
       horizontalScrollbarSize: 10,
       useShadows: false
     },
-    
-    // Other VS Code features
     mouseWheelZoom: true,
-    multiCursorModifier: "alt",
     smoothScrolling: true,
     cursorBlinking: "smooth",
     cursorSmoothCaretAnimation: true,
-    renderControlCharacters: false,
-    
-    // Auto save simulation
-    autoSurround: "languageDefined",
-    folding: true,
-    foldingStrategy: "indentation",
-    showFoldingControls: "mouseover",
-    
-    // Match VS Code theme
     automaticLayout: true
   };
 
@@ -1125,7 +559,6 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
 <body>
   ${code.html.replace(/<\/?html[^>]*>/gi, '').replace(/<\/?head[^>]*>/gi, '').replace(/<\/?body[^>]*>/gi, '').replace(/<title[^>]*>.*?<\/title>/gi, '')}
   <script>
-    // Enhanced console with full VS Code-like logging
     const originalConsole = { ...console };
     
     function sendToParent(method, args) {
@@ -1147,7 +580,7 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
       }, '*');
     }
     
-    ['log', 'error', 'warn', 'info', 'debug', 'table'].forEach(method => {
+    ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
       console[method] = function(...args) {
         sendToParent(method, args);
         originalConsole[method].apply(console, args);
@@ -1159,14 +592,10 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
       return false;
     };
     
-    window.addEventListener('unhandledrejection', function(event) {
-      console.error('Unhandled Promise Rejection:', event.reason);
-    });
-    
     try {
       ${code.javascript}
     } catch (error) {
-      console.error('Execution Error:', error.message, '\\nStack:', error.stack);
+      console.error('Execution Error:', error.message);
     }
   </script>
 </body>
@@ -1227,19 +656,25 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
     setTimeout(runCode, 100);
   }, []);
 
-  // Monaco editor mount handler
-  const handleEditorMount = (editor, monaco) => {
-    monacoRef.current = { editor, monaco };
-    
-    // Add VS Code keybindings
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-      console.log('💾 Code saved (Ctrl+S)');
-    });
-    
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      runCode();
-    });
+  // Fullscreen handling
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
   };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const clearConsole = () => setConsoleOutput([]);
 
@@ -1253,7 +688,6 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
       });
       setSelectedTemplate(templateKey);
       clearConsole();
-      console.log(`📚 Loaded template: ${template.name}`);
     }
   };
 
@@ -1264,9 +698,12 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div 
+      ref={containerRef}
+      className={`${isFullscreen ? 'fixed inset-0 z-50' : 'min-h-screen'} bg-gray-900 text-white flex flex-col`}
+    >
       {/* VS Code-like Header */}
-      <div className="bg-gray-800 border-b border-gray-700">
+      <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-4">
             <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -1281,10 +718,11 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Template Selector */}
             <select 
               value={selectedTemplate}
               onChange={(e) => loadTemplate(e.target.value)}
-              className="bg-gray-700 text-sm px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="bg-gray-700 text-sm px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               {Object.entries(templates).map(([key, template]) => (
                 <option key={key} value={key}>
@@ -1293,32 +731,113 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
               ))}
             </select>
             
-            <label className="flex items-center gap-2 text-sm">
+            {/* Theme Selector */}
+            <select 
+              value={editorTheme}
+              onChange={(e) => setEditorTheme(e.target.value)}
+              className="bg-gray-700 text-sm px-3 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
+              title="Select Editor Theme"
+            >
+              <optgroup label="Popular Themes">
+                <option value="dracula">🧛 Dracula</option>
+                <option value="monokai">🎨 Monokai Pro</option>
+                <option value="cobalt2">💎 Cobalt2</option>
+                <option value="tokyo-night">🌃 Tokyo Night</option>
+                <option value="one-dark">🔵 One Dark Pro</option>
+                <option value="material">🎭 Material Theme</option>
+                <option value="synthwave">🌆 SynthWave '84</option>
+                <option value="night-owl">🦉 Night Owl</option>
+              </optgroup>
+              <optgroup label="Light Themes">
+                <option value="vs">☀️ Light (Visual Studio)</option>
+                <option value="github-light">🐱 GitHub Light</option>
+                <option value="solarized-light">🌞 Solarized Light</option>
+                <option value="ayu-light">🌿 Ayu Light</option>
+              </optgroup>
+              <optgroup label="Dark Themes">
+                <option value="vs-dark">🌑 Dark (Visual Studio)</option>
+                <option value="github-dark">🐙 GitHub Dark</option>
+                <option value="nord">❄️ Nord</option>
+                <option value="palenight">🌙 Palenight</option>
+                <option value="solarized-dark">🌒 Solarized Dark</option>
+                <option value="ayu-dark">🍃 Ayu Dark</option>
+              </optgroup>
+              <optgroup label="High Contrast">
+                <option value="hc-black">⚫ High Contrast Black</option>
+                <option value="hc-light">⚪ High Contrast Light</option>
+              </optgroup>
+            </select>
+            
+            {/* Auto-run Toggle */}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input 
                 type="checkbox"
                 checked={autoRun}
                 onChange={(e) => setAutoRun(e.target.checked)}
-                className="rounded"
+                className="rounded cursor-pointer"
               />
               Auto-run
             </label>
             
+            {/* View Options */}
+            <div className="flex items-center gap-1 bg-gray-700 rounded p-1">
+              <button
+                onClick={() => setSplitView('vertical')}
+                className={`p-1 rounded ${splitView === 'vertical' ? 'bg-gray-600' : ''}`}
+                title="Vertical Split"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <rect x="2" y="2" width="7" height="16" />
+                  <rect x="11" y="2" width="7" height="16" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setSplitView('horizontal')}
+                className={`p-1 rounded ${splitView === 'horizontal' ? 'bg-gray-600' : ''}`}
+                title="Horizontal Split"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <rect x="2" y="2" width="16" height="7" />
+                  <rect x="2" y="11" width="16" height="7" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Console Toggle */}
+            <button
+              onClick={() => setShowConsole(!showConsole)}
+              className="p-1 hover:bg-gray-700 rounded"
+              title="Toggle Console"
+            >
+              📋
+            </button>
+            
+            {/* Run Button */}
             <button 
               onClick={runCode}
               className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors flex items-center gap-2"
             >
-              ▶ Run (Ctrl+Enter)
+              ▶ Run
+            </button>
+            
+            {/* Fullscreen Button */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-1 hover:bg-gray-700 rounded"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? '🗗' : '⛶'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 h-[calc(100vh-48px)]">
+      <div className={`flex-1 flex ${splitView === 'horizontal' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
         {/* Editor Panel */}
-        <div className="border-r border-gray-700 flex flex-col">
+        <div className={`${splitView === 'horizontal' ? 'h-1/2' : 'w-1/2'} border-r border-gray-700 flex flex-col`}>
           {/* File Tabs */}
-          <div className="bg-gray-800 flex border-b border-gray-700">
+          <div className="bg-gray-800 flex border-b border-gray-700 flex-shrink-0">
             {tabs.map(tab => (
               <button
                 key={tab.key}
@@ -1341,7 +860,7 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
               height="100%"
               language={tabs.find(t => t.key === activeTab)?.language}
               value={code[activeTab]}
-              theme={isDarkMode ? "vs-dark" : "vs"}
+              theme={editorTheme}
               onChange={(value) => setCode(prev => ({ ...prev, [activeTab]: value || '' }))}
               onMount={handleEditorMount}
               options={editorOptions}
@@ -1358,10 +877,10 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
         </div>
 
         {/* Output Panel */}
-        <div className="flex flex-col">
+        <div className={`${splitView === 'horizontal' ? 'h-1/2' : 'w-1/2'} flex flex-col`}>
           {/* Preview */}
-          <div className="flex-1 flex flex-col">
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-medium">
+          <div className={`${showConsole ? 'flex-1' : 'h-full'} flex flex-col`}>
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-medium flex-shrink-0">
               👁️ Preview
             </div>
             <iframe
@@ -1373,35 +892,39 @@ console.log('💡 Tip: Use the Monaco Editor features like IntelliSense and form
           </div>
           
           {/* Console */}
-          <div className="h-64 flex flex-col border-t border-gray-700">
-            <div className="bg-gray-800 px-4 py-2 flex justify-between items-center text-sm">
-              <span>Console ({consoleOutput.length})</span>
-              <button 
-                onClick={clearConsole}
-                className="text-gray-400 hover:text-white"
-              >
-                Clear
-              </button>
+          {showConsole && (
+            <div className="h-48 flex flex-col border-t border-gray-700">
+              <div className="bg-gray-800 px-4 py-2 flex justify-between items-center text-sm flex-shrink-0">
+                <span>Console ({consoleOutput.length})</span>
+                <button 
+                  onClick={clearConsole}
+                  className="text-gray-400 hover:text-white"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex-1 bg-gray-950 p-3 overflow-y-auto font-mono text-sm">
+                {consoleOutput.length === 0 ? (
+                  <div className="text-gray-500">Console output will appear here...</div>
+                ) : (
+                  consoleOutput.map((log, i) => (
+                    <div key={i} className={`mb-1 ${
+                      log.method === 'error' ? 'text-red-400' :
+                      log.method === 'warn' ? 'text-yellow-400' :
+                      log.method === 'info' ? 'text-blue-400' :
+                      'text-gray-300'
+                    }`}>
+                      <span className="text-gray-500">[{log.timestamp}]</span> {log.args.join(' ')}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="flex-1 bg-gray-950 p-3 overflow-y-auto font-mono text-sm">
-              {consoleOutput.length === 0 ? (
-                <div className="text-gray-500">Console output will appear here...</div>
-              ) : (
-                consoleOutput.map((log, i) => (
-                  <div key={i} className={`mb-1 ${
-                    log.method === 'error' ? 'text-red-400' :
-                    log.method === 'warn' ? 'text-yellow-400' :
-                    log.method === 'info' ? 'text-blue-400' :
-                    'text-gray-300'
-                  }`}>
-                    <span className="text-gray-500">[{log.timestamp}]</span> {log.args.join(' ')}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
+
+export default Playground;
