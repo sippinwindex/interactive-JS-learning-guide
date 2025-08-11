@@ -5,6 +5,7 @@ import { Documentation } from './pages/Documentation';
 import { Playground } from './pages/Playground';
 import { Challenges } from './pages/Challenges';
 import { Guide } from './pages/Guide';
+import { Playground } from './components/playground/Playground';
 
 // Simple router component without external dependencies
 const SimpleRouter = () => {
