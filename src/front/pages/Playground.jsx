@@ -109,9 +109,12 @@ button?.addEventListener('click', function() {
   const [consoleOutput, setConsoleOutput] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [editorTheme, setEditorTheme] = useState('vs-dark');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   
   const iframeRef = useRef(null);
   const runTimeoutRef = useRef(null);
+  const containerRef = useRef(null);
 
   const runCode = () => {
     if (!iframeRef.current) return;
@@ -222,6 +225,40 @@ button?.addEventListener('click', function() {
     setTimeout(runCode, 100);
   }, []);
 
+  // Fullscreen handling
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Load example code
+  const loadExample = (exampleKey) => {
+    const example = codeExamples[exampleKey];
+    if (example) {
+      setCode({
+        html: example.html,
+        css: example.css,
+        javascript: example.javascript
+      });
+      setShowExamples(false);
+      setTimeout(runCode, 100);
+    }
+  };
+
   const clearConsole = () => setConsoleOutput([]);
 
   const tabs = [
@@ -231,16 +268,54 @@ button?.addEventListener('click', function() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+    <div ref={containerRef} className={`${isFullscreen ? 'fixed inset-0 z-50' : 'min-h-screen'} bg-gray-50 dark:bg-gray-900 pt-16`}>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-            🚀 VS Code Playground
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Write HTML, CSS, and JavaScript with live preview
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                🚀 VS Code Playground
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Write HTML, CSS, and JavaScript with live preview
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowExamples(!showExamples)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                📚 Examples
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? '🗗 Exit' : '⛶ Fullscreen'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Examples Dropdown */}
+          {showExamples && (
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Choose an Example:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {Object.entries(codeExamples).map(([key, example]) => (
+                  <button
+                    key={key}
+                    onClick={() => loadExample(key)}
+                    className="p-3 bg-white dark:bg-gray-600 rounded-lg hover:shadow-md transition-all text-left"
+                  >
+                    <div className="font-medium text-gray-800 dark:text-white">{example.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{example.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main Editor Area */}
