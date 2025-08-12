@@ -15,8 +15,8 @@ function fetchUserData(userId) {
             if (userId > 0) {
                 resolve({
                     id: userId,
-                    name: \`User \${userId}\`,
-                    email: \`user\${userId}@example.com\`
+                    name: 'User ' + userId,
+                    email: 'user' + userId + '@example.com'
                 });
             } else {
                 reject(new Error('Invalid user ID'));
@@ -48,9 +48,9 @@ async function demonstratePromiseCombinators() {
     
     settledResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
-            console.log(\`User \${index + 1}: \${result.value.name}\`);
+            console.log('User ' + (index + 1) + ': ' + result.value.name);
         } else {
-            console.log(\`User \${index + 1} failed: \${result.reason.message}\`);
+            console.log('User ' + (index + 1) + ' failed: ' + result.reason.message);
         }
     });
     
@@ -89,7 +89,7 @@ console.log('\\n=== Promise Chaining vs Async/Await ===');
 fetchUserData(1)
     .then(user => {
         console.log('Promise chain - User:', user.name);
-        return \`Processed: \${user.name}\`;
+        return 'Processed: ' + user.name;
     })
     .then(processed => {
         console.log('Promise chain - Processed:', processed);
@@ -165,7 +165,7 @@ async function robustErrorHandling() {
                 throw new ValidationError('User email is required');
             }
             
-            return \`Processed user: \${userData.name}\`;
+            return 'Processed user: ' + userData.name;
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.error('Validation error:', error.message);
@@ -200,7 +200,7 @@ async function* fetchUserPages() {
     
     while (page <= maxPages) {
         try {
-            console.log(\`Fetching page \${page}...\`);
+            console.log('Fetching page ' + page + '...');
             // Simulate fetching a page of users
             const users = await Promise.all([
                 fetchUserData(page * 2 - 1),
@@ -210,7 +210,7 @@ async function* fetchUserPages() {
             yield { page, users, hasMore: page < maxPages };
             page++;
         } catch (error) {
-            console.error(\`Failed to fetch page \${page}:`, error.message);
+            console.error('Failed to fetch page ' + page + ':', error.message);
             break;
         }
     }
@@ -218,9 +218,9 @@ async function* fetchUserPages() {
 
 async function processAllUsers() {
     for await (const userBatch of fetchUserPages()) {
-        console.log(\`Page \${userBatch.page}: \${userBatch.users.length} users\`);
+        console.log('Page ' + userBatch.page + ': ' + userBatch.users.length + ' users');
         userBatch.users.forEach(user => {
-            console.log(\`  - \${user.name}\`);
+            console.log('  - ' + user.name);
         });
     }
 }
@@ -281,7 +281,7 @@ async function withRetry(asyncFn, maxRetries = 3, baseDelay = 1000) {
             }
             
             const delay = baseDelay * Math.pow(2, attempt - 1);
-            console.log(\`Attempt \${attempt} failed, retrying in \${delay}ms...\`);
+            console.log('Attempt ' + attempt + ' failed, retrying in ' + delay + 'ms...');
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
@@ -351,7 +351,7 @@ class RateLimiter {
         if (this.requests.length >= this.maxRequests) {
             const oldestRequest = this.requests[0];
             const waitTime = this.timeWindow - (now - oldestRequest);
-            console.log(\`Rate limit reached, waiting \${waitTime}ms...\`);
+            console.log('Rate limit reached, waiting ' + waitTime + 'ms...');
             await new Promise(resolve => setTimeout(resolve, waitTime));
             return this.execute(asyncFn);
         }
@@ -370,7 +370,7 @@ async function demonstratePatterns() {
     const unreliableAPI = async () => {
         attempts++;
         if (attempts < 3) {
-            throw new Error(\`API call failed (attempt \${attempts})\`);
+            throw new Error('API call failed (attempt ' + attempts + ')');
         }
         return 'API call succeeded!';
     };
@@ -393,7 +393,7 @@ async function demonstratePatterns() {
                 return 'Service working';
             });
         } catch (error) {
-            console.log(\`Request \${i + 1}: \${error.message}\`);
+            console.log('Request ' + (i + 1) + ': ' + error.message);
         }
     }
     
@@ -404,8 +404,8 @@ async function demonstratePatterns() {
     for (let i = 0; i < 5; i++) {
         try {
             await rateLimiter.execute(async () => {
-                console.log(\`Request \${i + 1} processed at \${new Date().toLocaleTimeString()}\`);
-                return \`Response \${i + 1}\`;
+                console.log('Request ' + (i + 1) + ' processed at ' + new Date().toLocaleTimeString());
+                return 'Response ' + (i + 1);
             });
         } catch (error) {
             console.error('Request failed:', error.message);
