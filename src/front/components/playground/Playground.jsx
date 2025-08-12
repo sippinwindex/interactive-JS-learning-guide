@@ -19,9 +19,43 @@ export const Playground = ({ navigateTo, isDarkMode = false }) => {
   const [layoutMode, setLayoutMode] = useState('horizontal');
   const [fontSize, setFontSize] = useState(14);
   const [editorTheme, setEditorTheme] = useState('dracula');
+  const [monacoLoaded, setMonacoLoaded] = useState(false);
   
   const iframeRef = useRef(null);
   const editorRef = useRef(null);
+
+  // Check if Monaco is loaded
+  useEffect(() => {
+    const checkMonaco = () => {
+      if (typeof window !== 'undefined' && window.monaco) {
+        setMonacoLoaded(true);
+        console.log('Monaco Editor is available');
+      } else {
+        console.warn('Monaco Editor not found, using fallback');
+        // Try loading Monaco if it's not available
+        if (typeof window !== 'undefined') {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
+          script.onload = () => {
+            if (window.require) {
+              window.require.config({ 
+                paths: { 
+                  vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' 
+                } 
+              });
+              window.require(['vs/editor/editor.main'], () => {
+                setMonacoLoaded(true);
+                console.log('Monaco Editor loaded dynamically');
+              });
+            }
+          };
+          document.head.appendChild(script);
+        }
+      }
+    };
+
+    checkMonaco();
+  }, []);
 
   // Initialize with default files
   useEffect(() => {
@@ -37,11 +71,19 @@ export const Playground = ({ navigateTo, isDarkMode = false }) => {
   // Handle run code
   const handleRunCode = () => {
     setIsRunning(true);
-    const result = runCode(state.files, iframeRef.current);
-    if (result.error) {
+    try {
+      const result = runCode(state.files, iframeRef.current);
+      if (result.error) {
+        setConsoleOutput(prev => [...prev, {
+          method: 'error',
+          args: [result.error],
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      }
+    } catch (error) {
       setConsoleOutput(prev => [...prev, {
         method: 'error',
-        args: [result.error],
+        args: ['Error running code: ' + error.message],
         timestamp: new Date().toLocaleTimeString()
       }]);
     }
@@ -82,71 +124,101 @@ export const Playground = ({ navigateTo, isDarkMode = false }) => {
 
   return (
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
-      <TopBar
-        isRunning={isRunning}
-        onRun={handleRunCode}
-        fontSize={fontSize}
-        setFontSize={setFontSize}
-        layoutMode={layoutMode}
-        setLayoutMode={setLayoutMode}
-        showConsole={showConsole}
-        setShowConsole={setShowConsole}
-        editorTheme={editorTheme}
-        setEditorTheme={setEditorTheme}
-        showFileExplorer={showFileExplorer}
-        setShowFileExplorer={setShowFileExplorer}
-        files={state.files}
-        dispatch={dispatch}
-      />
+      {/* Top Bar */}
+      <div className="flex-shrink-0 h-16 bg-gray-800 border-b border-gray-700">
+        <TopBar
+          isRunning={isRunning}
+          onRun={handleRunCode}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          layoutMode={layoutMode}
+          setLayoutMode={setLayoutMode}
+          showConsole={showConsole}
+          setShowConsole={setShowConsole}
+          editorTheme={editorTheme}
+          setEditorTheme={setEditorTheme}
+          showFileExplorer={showFileExplorer}
+          setShowFileExplorer={setShowFileExplorer}
+          files={state.files}
+          dispatch={dispatch}
+        />
+      </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* File Explorer */}
         {showFileExplorer && (
-          <FileExplorer
-            files={state.files}
-            activeFile={state.activeFile}
-            dispatch={dispatch}
-          />
-        )}
-
-        <div className={`flex-1 flex ${layoutMode === 'vertical' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
-          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-gray-900`}>
-            <EditorTabs
+          <div className="w-64 bg-gray-800 border-r border-gray-700 flex-shrink-0">
+            <FileExplorer
               files={state.files}
-              openTabs={state.openTabs}
               activeFile={state.activeFile}
               dispatch={dispatch}
             />
-            
-            {state.activeFile && (
-              <MonacoEditorWrapper
-                file={state.files[state.activeFile]}
-                filename={state.activeFile}
-                fontSize={fontSize}
-                theme={editorTheme}
-                onChange={(value) => dispatch({
-                  type: 'UPDATE_FILE',
-                  payload: { filename: state.activeFile, content: value }
-                })}
-                editorRef={editorRef}
+          </div>
+        )}
+
+        {/* Editor and Output Area */}
+        <div className={`flex-1 flex ${layoutMode === 'vertical' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
+          
+          {/* Editor Section */}
+          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-gray-900 border-r border-gray-700`}>
+            {/* Editor Tabs */}
+            <div className="flex-shrink-0 bg-gray-800 border-b border-gray-700">
+              <EditorTabs
+                files={state.files}
+                openTabs={state.openTabs}
+                activeFile={state.activeFile}
+                dispatch={dispatch}
               />
-            )}
+            </div>
+            
+            {/* Monaco Editor */}
+            <div className="flex-1 overflow-hidden">
+              {state.activeFile ? (
+                <MonacoEditorWrapper
+                  file={state.files[state.activeFile]}
+                  filename={state.activeFile}
+                  fontSize={fontSize}
+                  theme={editorTheme}
+                  onChange={(value) => dispatch({
+                    type: 'UPDATE_FILE',
+                    payload: { filename: state.activeFile, content: value }
+                  })}
+                  editorRef={editorRef}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center bg-gray-900 text-gray-500">
+                  <div className="text-center">
+                    <div className="text-4xl mb-4">📁</div>
+                    <p>No file selected</p>
+                    <p className="text-sm mt-2">Create or select a file to start coding</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <OutputPanel
-            layoutMode={layoutMode}
-            showConsole={showConsole}
-            consoleOutput={consoleOutput}
-            onClearConsole={() => setConsoleOutput([])}
-            iframeRef={iframeRef}
-          />
+          {/* Output Panel */}
+          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-white`}>
+            <OutputPanel
+              layoutMode={layoutMode}
+              showConsole={showConsole}
+              consoleOutput={consoleOutput}
+              onClearConsole={() => setConsoleOutput([])}
+              iframeRef={iframeRef}
+            />
+          </div>
         </div>
       </div>
 
-      <StatusBar
-        activeFile={state.activeFile}
-        files={state.files}
-        cursorPosition={state.cursorPosition}
-      />
+      {/* Status Bar */}
+      <div className="flex-shrink-0 h-8 bg-gray-800 border-t border-gray-700">
+        <StatusBar
+          activeFile={state.activeFile}
+          files={state.files}
+          cursorPosition={state.cursorPosition}
+        />
+      </div>
     </div>
   );
 };
