@@ -13,12 +13,9 @@ import {
 
 const EnhancedPlayground = () => {
   // State management
-  const [files, setFiles] = useState(() => {
-    // Load from localStorage or use default files
-    const saved = storage.load('playground-files');
-    return saved || {
-      'index.html': {
-        content: `<!DOCTYPE html>
+  const [files, setFiles] = useState({
+    'index.html': {
+      content: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -36,10 +33,10 @@ const EnhancedPlayground = () => {
   <script src="script.js"></script>
 </body>
 </html>`,
-        language: 'html'
-      },
-      'style.css': {
-        content: `* {
+      language: 'html'
+    },
+    'style.css': {
+      content: `* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -102,10 +99,10 @@ p {
   min-height: 50px;
   color: #333;
 }`,
-        language: 'css'
-      },
-      'script.js': {
-        content: `// Get references to DOM elements
+      language: 'css'
+    },
+    'script.js': {
+      content: `// Get references to DOM elements
 const button = document.getElementById('myButton');
 const output = document.getElementById('output');
 
@@ -134,9 +131,8 @@ button.addEventListener('click', function() {
 
 // Initialize
 console.log('JavaScript loaded and ready!');`,
-        language: 'javascript'
-      }
-    };
+      language: 'javascript'
+    }
   });
 
   const [activeFile, setActiveFile] = useState('index.html');
@@ -147,7 +143,6 @@ console.log('JavaScript loaded and ready!');`,
   const [isConsoleVisible, setIsConsoleVisible] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [selectedLibraries, setSelectedLibraries] = useState([]);
-  const [splitView, setSplitView] = useState('horizontal'); // horizontal or vertical
   
   // Refs
   const iframeRef = useRef(null);
@@ -156,31 +151,17 @@ console.log('JavaScript loaded and ready!');`,
 
   // Available libraries
   const availableLibraries = [
-    { id: 'react', name: 'React', icon: '⚛️' },
-    { id: 'vue', name: 'Vue.js', icon: '🔥' },
-    { id: 'jquery', name: 'jQuery', icon: '$' },
-    { id: 'bootstrap', name: 'Bootstrap', icon: '🅱️' },
-    { id: 'tailwind', name: 'Tailwind CSS', icon: '💨' },
-    { id: 'three', name: 'Three.js', icon: '🎲' },
-    { id: 'd3', name: 'D3.js', icon: '📊' },
-    { id: 'chart', name: 'Chart.js', icon: '📈' },
-    { id: 'gsap', name: 'GSAP', icon: '🎬' },
-    { id: 'anime', name: 'Anime.js', icon: '✨' }
+    { id: 'react', name: 'React' },
+    { id: 'vue', name: 'Vue.js' },
+    { id: 'jquery', name: 'jQuery' },
+    { id: 'bootstrap', name: 'Bootstrap' },
+    { id: 'tailwind', name: 'Tailwind CSS' },
+    { id: 'three', name: 'Three.js' },
+    { id: 'd3', name: 'D3.js' },
+    { id: 'chart', name: 'Chart.js' },
+    { id: 'gsap', name: 'GSAP' },
+    { id: 'anime', name: 'Anime.js' }
   ];
-
-  // Initialize auto-save
-  useEffect(() => {
-    autoSaveRef.current = createAutoSave(() => {
-      storage.save('playground-files', files);
-      console.log('Auto-saved at', new Date().toLocaleTimeString());
-    }, 2000);
-
-    return () => {
-      if (autoSaveRef.current) {
-        autoSaveRef.current.cancel();
-      }
-    };
-  }, [files]);
 
   // Update preview when files change
   useEffect(() => {
@@ -192,7 +173,7 @@ console.log('JavaScript loaded and ready!');`,
       });
       
       if (result.error) {
-        addConsoleMessage('error', `Error: ${result.error}`);
+        console.error('Preview error:', result.error);
       }
     }
   }, [files, selectedLibraries]);
@@ -201,7 +182,11 @@ console.log('JavaScript loaded and ready!');`,
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data && event.data.type === 'console') {
-        addConsoleMessage(event.data.method, ...event.data.args);
+        setConsoleOutput(prev => [...prev, {
+          method: event.data.method,
+          args: event.data.args,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
       }
     };
 
@@ -210,7 +195,7 @@ console.log('JavaScript loaded and ready!');`,
   }, []);
 
   // File operations
-  const updateFile = useCallback((filename, content) => {
+  const updateFile = (filename, content) => {
     setFiles(prev => ({
       ...prev,
       [filename]: {
@@ -218,13 +203,9 @@ console.log('JavaScript loaded and ready!');`,
         content
       }
     }));
-    
-    if (autoSaveRef.current) {
-      autoSaveRef.current.trigger();
-    }
-  }, []);
+  };
 
-  const createFile = useCallback(() => {
+  const createFile = () => {
     const filename = prompt('Enter filename (e.g., app.js, styles.css):');
     if (filename && !files[filename]) {
       const language = getFileLanguage(filename);
@@ -237,141 +218,138 @@ console.log('JavaScript loaded and ready!');`,
       }));
       setActiveFile(filename);
     }
-  }, [files]);
+  };
 
-  const deleteFile = useCallback((filename) => {
+  const deleteFile = (filename) => {
     if (Object.keys(files).length > 1 && confirm(`Delete ${filename}?`)) {
-      setFiles(prev => {
-        const newFiles = { ...prev };
-        delete newFiles[filename];
-        return newFiles;
-      });
+      const newFiles = { ...files };
+      delete newFiles[filename];
+      setFiles(newFiles);
       
       if (activeFile === filename) {
-        setActiveFile(Object.keys(files)[0]);
+        setActiveFile(Object.keys(newFiles)[0]);
       }
     }
-  }, [files, activeFile]);
+  };
 
-  const renameFile = useCallback((oldName) => {
-    const newName = prompt('Enter new filename:', oldName);
-    if (newName && newName !== oldName && !files[newName]) {
-      setFiles(prev => {
-        const newFiles = { ...prev };
-        newFiles[newName] = newFiles[oldName];
-        delete newFiles[oldName];
-        return newFiles;
-      });
-      
-      if (activeFile === oldName) {
-        setActiveFile(newName);
-      }
-    }
-  }, [files, activeFile]);
+  const handleExport = () => {
+    exportProject(files, 'my-project');
+  };
 
-  // Console operations
-  const addConsoleMessage = useCallback((method, ...args) => {
-    setConsoleOutput(prev => [...prev, {
-      method,
-      args,
-      timestamp: new Date().toLocaleTimeString()
-    }]);
-  }, []);
-
-  const clearConsole = useCallback(() => {
-    setConsoleOutput([]);
-  }, []);
-
-  // Export/Import operations
-  const handleExport = useCallback(() => {
-    const projectName = prompt('Enter project name:', 'my-project');
-    if (projectName) {
-      exportProject(files, projectName);
-    }
-  }, [files]);
-
-  const handleImport = useCallback(async () => {
+  const handleImport = async () => {
     try {
       const projectData = await importProject();
       setFiles(projectData.files);
       setActiveFile(Object.keys(projectData.files)[0]);
-      addConsoleMessage('info', `Imported project: ${projectData.name}`);
     } catch (error) {
-      addConsoleMessage('error', error.message);
+      console.error('Import failed:', error);
     }
-  }, []);
-
-  // Get console message color
-  const getConsoleColor = (method) => {
-    const colors = {
-      log: 'text-gray-300',
-      info: 'text-blue-400',
-      warn: 'text-yellow-400',
-      error: 'text-red-400',
-      debug: 'text-purple-400'
-    };
-    return colors[method] || 'text-gray-300';
   };
 
-  // Refresh preview
-  const refreshPreview = useCallback(() => {
+  const clearConsole = () => {
+    setConsoleOutput([]);
+  };
+
+  const refreshPreview = () => {
     if (iframeRef.current) {
       const result = enhancedRunCode(files, iframeRef.current, {
         enableConsoleCapture: true,
         enableErrorHandling: true,
         libraries: selectedLibraries
       });
-      
-      if (result.error) {
-        addConsoleMessage('error', `Error: ${result.error}`);
-      }
+      clearConsole();
     }
-  }, [files, selectedLibraries]);
+  };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden">
-      {/* Top Toolbar - Fixed positioning */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0 relative z-10">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#1f2937', color: 'white', overflow: 'hidden' }}>
+      {/* Top Toolbar */}
+      <div style={{ 
+        backgroundColor: '#374151', 
+        borderBottom: '1px solid #4b5563', 
+        padding: '12px 16px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        position: 'relative',
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
             Code Playground
           </h1>
           
           {/* File operations */}
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={createFile}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors text-white"
-              title="New File"
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
             >
               + New
             </button>
             
             <button
               onClick={handleImport}
-              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white"
-              title="Import Project"
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#4b5563'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#6b7280'}
             >
-              📥 Import
+              Import
             </button>
             
             <button
               onClick={handleExport}
-              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white"
-              title="Export Project"
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#4b5563'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#6b7280'}
             >
-              📤 Export
+              Export
             </button>
           </div>
         </div>
 
         {/* Toolbar controls */}
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Theme selector */}
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            className="bg-gray-700 text-white px-2 py-1.5 rounded text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
+            style={{
+              backgroundColor: '#4b5563',
+              color: 'white',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              border: '1px solid #6b7280',
+              cursor: 'pointer'
+            }}
           >
             <option value="vs-dark">Dark</option>
             <option value="vs">Light</option>
@@ -380,29 +358,49 @@ console.log('JavaScript loaded and ready!');`,
           </select>
 
           {/* Font size */}
-          <div className="flex items-center gap-1 bg-gray-700 rounded px-2 py-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#4b5563', borderRadius: '4px', padding: '4px 8px' }}>
             <button
               onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-              className="text-gray-300 hover:text-white text-sm transition-colors px-1"
+              style={{
+                color: '#d1d5db',
+                background: 'none',
+                border: 'none',
+                fontSize: '14px',
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}
             >
               A-
             </button>
-            <span className="text-sm text-gray-400 px-2">{fontSize}px</span>
+            <span style={{ fontSize: '14px', color: '#9ca3af', padding: '0 8px' }}>{fontSize}px</span>
             <button
               onClick={() => setFontSize(Math.min(24, fontSize + 1))}
-              className="text-gray-300 hover:text-white text-sm transition-colors px-1"
+              style={{
+                color: '#d1d5db',
+                background: 'none',
+                border: 'none',
+                fontSize: '14px',
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}
             >
               A+
             </button>
           </div>
 
           {/* View toggles */}
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-              className={`px-2 py-1.5 rounded text-sm transition-colors ${
-                isSidebarVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isSidebarVisible ? '#3b82f6' : '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
               title="Toggle Sidebar"
             >
               📁
@@ -410,9 +408,15 @@ console.log('JavaScript loaded and ready!');`,
             
             <button
               onClick={() => setIsPreviewVisible(!isPreviewVisible)}
-              className={`px-2 py-1.5 rounded text-sm transition-colors ${
-                isPreviewVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isPreviewVisible ? '#3b82f6' : '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
               title="Toggle Preview"
             >
               👁️
@@ -420,28 +424,36 @@ console.log('JavaScript loaded and ready!');`,
             
             <button
               onClick={() => setIsConsoleVisible(!isConsoleVisible)}
-              className={`px-2 py-1.5 rounded text-sm transition-colors ${
-                isConsoleVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isConsoleVisible ? '#3b82f6' : '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
               title="Toggle Console"
             >
               🖥️
-            </button>
-
-            <button
-              onClick={() => setSplitView(splitView === 'horizontal' ? 'vertical' : 'horizontal')}
-              className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300 hover:text-white transition-colors"
-              title="Toggle Split Direction"
-            >
-              {splitView === 'horizontal' ? '⬌' : '⬍'}
             </button>
           </div>
 
           {/* Refresh button */}
           <button
             onClick={refreshPreview}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors text-white font-medium"
-            title="Refresh Preview"
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
           >
             🔄 Refresh
           </button>
@@ -449,66 +461,91 @@ console.log('JavaScript loaded and ready!');`,
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Sidebar */}
         {isSidebarVisible && (
-          <div className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+          <div style={{ width: '256px', backgroundColor: '#374151', borderRight: '1px solid #4b5563', display: 'flex', flexDirection: 'column' }}>
             {/* Files Section */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase mb-2">Files</h3>
-                <div className="space-y-1">
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ padding: '16px' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  FILES
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {Object.keys(files).map(filename => (
                     <div
                       key={filename}
-                      className={`group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer hover:bg-gray-700 ${
-                        activeFile === filename ? 'bg-gray-700' : ''
-                      }`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        backgroundColor: activeFile === filename ? '#4b5563' : 'transparent'
+                      }}
                       onClick={() => setActiveFile(filename)}
+                      onMouseEnter={(e) => {
+                        if (activeFile !== filename) {
+                          e.currentTarget.style.backgroundColor = '#3f4451';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (activeFile !== filename) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{
-                          filename.endsWith('.html') ? '📄' :
-                          filename.endsWith('.css') ? '🎨' :
-                          filename.endsWith('.js') ? '📜' : '📃'
-                        }</span>
-                        <span className="text-sm text-gray-200">{filename}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>
+                          {filename.endsWith('.html') ? '📄' :
+                           filename.endsWith('.css') ? '🎨' :
+                           filename.endsWith('.js') ? '📜' : '📃'}
+                        </span>
+                        <span style={{ fontSize: '14px', color: '#e5e7eb' }}>{filename}</span>
                       </div>
-                      <div className="hidden group-hover:flex items-center gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            renameFile(filename);
-                          }}
-                          className="p-1 hover:bg-gray-600 rounded text-xs"
-                          title="Rename"
-                        >
-                          ✏️
-                        </button>
+                      {Object.keys(files).length > 1 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteFile(filename);
                           }}
-                          className="p-1 hover:bg-gray-600 rounded text-xs"
-                          title="Delete"
+                          style={{
+                            padding: '2px 4px',
+                            background: 'none',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
                         >
-                          🗑️
+                          ✕
                         </button>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Libraries Section */}
-              <div className="p-4 border-t border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase mb-2">Libraries</h3>
-                <div className="space-y-1 max-h-64 overflow-y-auto">
+              <div style={{ padding: '16px', borderTop: '1px solid #4b5563' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  LIBRARIES
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
                   {availableLibraries.map(lib => (
                     <label
                       key={lib.id}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-700 px-2 py-1 rounded"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3f4451'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <input
                         type="checkbox"
@@ -520,24 +557,36 @@ console.log('JavaScript loaded and ready!');`,
                             setSelectedLibraries(selectedLibraries.filter(id => id !== lib.id));
                           }
                         }}
-                        className="rounded text-blue-600"
+                        style={{ cursor: 'pointer' }}
                       />
-                      <span className="text-base">{lib.icon}</span>
-                      <span className="text-sm text-gray-200">{lib.name}</span>
+                      <span style={{ fontSize: '14px', color: '#e5e7eb' }}>{lib.name}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               {/* Snippets Section */}
-              <div className="p-4 border-t border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase mb-2">Snippets</h3>
-                <div className="space-y-1">
+              <div style={{ padding: '16px', borderTop: '1px solid #4b5563' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  SNIPPETS
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {files[activeFile] && codeSnippets[files[activeFile].language] && 
                     Object.keys(codeSnippets[files[activeFile].language]).slice(0, 5).map(key => (
                       <button
                         key={key}
-                        className="w-full text-left px-2 py-1 text-sm text-gray-300 hover:bg-gray-700 rounded"
+                        style={{
+                          textAlign: 'left',
+                          padding: '4px 8px',
+                          fontSize: '14px',
+                          color: '#d1d5db',
+                          background: 'none',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#3f4451'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                       >
                         {key}
                       </button>
@@ -550,9 +599,14 @@ console.log('JavaScript loaded and ready!');`,
         )}
 
         {/* Editor and Preview Container */}
-        <div className={`flex-1 flex ${splitView === 'horizontal' ? 'flex-row' : 'flex-col'} overflow-hidden`}>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Editor Section */}
-          <div className={`${isPreviewVisible ? (splitView === 'horizontal' ? 'w-1/2' : 'h-1/2') : 'flex-1'} flex flex-col bg-gray-900`}>
+          <div style={{ 
+            width: isPreviewVisible ? '50%' : '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            backgroundColor: '#1f2937'
+          }}>
             <EnhancedMonacoEditor
               file={files[activeFile]}
               filename={activeFile}
@@ -566,38 +620,59 @@ console.log('JavaScript loaded and ready!');`,
 
           {/* Preview and Console */}
           {isPreviewVisible && (
-            <div className={`${splitView === 'horizontal' ? 'w-1/2' : 'h-1/2'} flex flex-col bg-white border-l border-gray-700`}>
+            <div style={{ width: '50%', display: 'flex', flexDirection: 'column', backgroundColor: 'white', borderLeft: '1px solid #4b5563' }}>
               {/* Preview */}
-              <div className={`${isConsoleVisible ? 'flex-1' : 'h-full'} relative bg-white`}>
+              <div style={{ flex: isConsoleVisible ? 1 : 'none', height: isConsoleVisible ? 'auto' : '100%', position: 'relative', backgroundColor: 'white' }}>
                 <iframe
                   ref={iframeRef}
-                  className="w-full h-full border-0 bg-white"
+                  style={{ width: '100%', height: '100%', border: 'none', backgroundColor: 'white' }}
                   title="Preview"
                   sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
-                  style={{ backgroundColor: 'white' }}
                 />
               </div>
 
               {/* Console */}
               {isConsoleVisible && (
-                <div className="h-48 bg-gray-900 border-t border-gray-700 flex flex-col">
-                  <div className="px-4 py-2 bg-gray-800 flex items-center justify-between flex-shrink-0">
-                    <span className="text-sm font-semibold text-gray-200">Console</span>
+                <div style={{ height: '192px', backgroundColor: '#1f2937', borderTop: '1px solid #4b5563', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ 
+                    padding: '8px 16px', 
+                    backgroundColor: '#374151', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    flexShrink: 0
+                  }}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#e5e7eb' }}>Console</span>
                     <button
                       onClick={clearConsole}
-                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-200"
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#4b5563',
+                        color: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#6b7280'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#4b5563'}
                     >
                       Clear
                     </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-3 font-mono text-sm">
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px', fontFamily: 'monospace', fontSize: '14px' }}>
                     {consoleOutput.length === 0 ? (
-                      <div className="text-gray-500">Console output will appear here...</div>
+                      <div style={{ color: '#6b7280' }}>Console output will appear here...</div>
                     ) : (
                       consoleOutput.map((msg, index) => (
-                        <div key={index} className={`mb-1 ${getConsoleColor(msg.method)}`}>
-                          <span className="text-gray-500 text-xs">[{msg.timestamp}]</span>{' '}
-                          <span className="font-semibold">{msg.method}:</span>{' '}
+                        <div key={index} style={{ 
+                          marginBottom: '4px',
+                          color: msg.method === 'error' ? '#ef4444' : 
+                                 msg.method === 'warn' ? '#f59e0b' : 
+                                 msg.method === 'info' ? '#3b82f6' : '#d1d5db'
+                        }}>
+                          <span style={{ color: '#6b7280', fontSize: '12px' }}>[{msg.timestamp}]</span>{' '}
+                          <span style={{ fontWeight: '600' }}>{msg.method}:</span>{' '}
                           {msg.args.join(' ')}
                         </div>
                       ))
@@ -611,17 +686,34 @@ console.log('JavaScript loaded and ready!');`,
       </div>
 
       {/* Status Bar */}
-      <div className="bg-gray-800 border-t border-gray-700 px-4 py-1 flex items-center justify-between text-xs text-gray-400 flex-shrink-0">
-        <div className="flex items-center gap-4">
+      <div style={{ 
+        backgroundColor: '#374151', 
+        borderTop: '1px solid #4b5563', 
+        padding: '4px 16px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        fontSize: '12px',
+        color: '#9ca3af',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span>Files: {Object.keys(files).length}</span>
           <span>•</span>
           <span>Libraries: {selectedLibraries.length}</span>
           <span>•</span>
           <span>Theme: {theme}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-green-400">
-            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#10b981' }}>
+            <span style={{ 
+              display: 'inline-block', 
+              width: '8px', 
+              height: '8px', 
+              backgroundColor: '#10b981', 
+              borderRadius: '50%', 
+              marginRight: '4px'
+            }}></span>
             Ready
           </span>
         </div>
