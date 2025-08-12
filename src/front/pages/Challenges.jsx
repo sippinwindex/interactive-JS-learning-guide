@@ -1,4 +1,4 @@
-// src/front/pages/Challenges.jsx - Updated with Professional Icons
+// src/front/pages/Challenges.jsx - Enhanced with animations using UI components
 import React, { useState, useEffect } from 'react';
 import CodeEditor from '../components/CodeEditor';
 import {
@@ -11,7 +11,8 @@ import {
   SparkleIcon,
   DocumentTextIcon,
   CodeIcon,
-  XIcon
+  XIcon,
+  RocketIcon
 } from '../components/ui/Icons';
 
 export const Challenges = ({ navigateTo }) => {
@@ -20,6 +21,8 @@ export const Challenges = ({ navigateTo }) => {
   const [testResults, setTestResults] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
   const [showHint, setShowHint] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [animatingCards, setAnimatingCards] = useState(false);
 
   // Load completed challenges from localStorage
   useEffect(() => {
@@ -27,12 +30,21 @@ export const Challenges = ({ navigateTo }) => {
     if (saved) {
       setCompletedChallenges(JSON.parse(saved));
     }
+    setIsLoaded(true);
   }, []);
 
   // Save completed challenges to localStorage
   useEffect(() => {
     localStorage.setItem('completedChallenges', JSON.stringify(completedChallenges));
   }, [completedChallenges]);
+
+  // Animate cards when switching categories
+  useEffect(() => {
+    if (isLoaded) {
+      setAnimatingCards(true);
+      setTimeout(() => setAnimatingCards(false), 100);
+    }
+  }, [isLoaded]);
 
   const challenges = {
     basics: {
@@ -227,11 +239,17 @@ export const Challenges = ({ navigateTo }) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+        {/* Animated Header */}
+        <div 
+          className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-all duration-1000 transform ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
+          }`}
+        >
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-3">
-              <TrophyIcon className="w-8 h-8 text-yellow-600" />
+              <div className="animate-bounce">
+                <TrophyIcon className="w-8 h-8 text-yellow-600" />
+              </div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
                 JavaScript Challenges
               </h1>
@@ -240,9 +258,9 @@ export const Challenges = ({ navigateTo }) => {
               <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 Progress: {completedChallenges.length} / {allChallenges.length}
               </div>
-              <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -253,21 +271,36 @@ export const Challenges = ({ navigateTo }) => {
         {!selectedChallenge ? (
           /* Challenge Categories */
           <div className="space-y-8">
-            {Object.entries(challenges).map(([key, category]) => {
+            {Object.entries(challenges).map(([key, category], categoryIndex) => {
               const IconComponent = category.icon;
               return (
-                <div key={key} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <div 
+                  key={key} 
+                  className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all duration-700 transform ${
+                    isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+                  }`}
+                  style={{ 
+                    transitionDelay: `${200 + categoryIndex * 200}ms` 
+                  }}
+                >
                   <div className="flex items-center space-x-3 mb-4">
-                    <IconComponent className={`w-6 h-6 ${category.color}`} />
+                    <div className="transform transition-transform duration-200 hover:scale-110 hover:rotate-12">
+                      <IconComponent className={`w-6 h-6 ${category.color}`} />
+                    </div>
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                       {category.title}
                     </h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {category.challenges.map(challenge => (
+                    {category.challenges.map((challenge, challengeIndex) => (
                       <div 
                         key={challenge.id}
-                        className={`border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer hover:scale-105 ${category.borderColor} dark:border-gray-700`}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg ${category.borderColor} dark:border-gray-700 ${
+                          animatingCards ? 'animate-pulse' : ''
+                        }`}
+                        style={{ 
+                          animationDelay: `${500 + categoryIndex * 200 + challengeIndex * 100}ms` 
+                        }}
                         onClick={() => selectChallenge(challenge)}
                       >
                         <div className="flex justify-between items-start mb-2">
@@ -276,9 +309,11 @@ export const Challenges = ({ navigateTo }) => {
                           </h3>
                           <div className="flex items-center space-x-2">
                             {completedChallenges.includes(challenge.id) && (
-                              <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                              <div className="animate-bounce">
+                                <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                              </div>
                             )}
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(challenge.difficulty)}`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${getDifficultyColor(challenge.difficulty)}`}>
                               {challenge.difficulty}
                             </span>
                           </div>
@@ -287,9 +322,11 @@ export const Challenges = ({ navigateTo }) => {
                           {challenge.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <button className={`flex items-center space-x-1 ${category.color} hover:underline text-sm font-medium`}>
+                          <button className={`flex items-center space-x-1 ${category.color} hover:underline text-sm font-medium group`}>
                             <span>Start Challenge</span>
-                            <ChevronRightIcon className="w-3 h-3" />
+                            <div className="transform transition-transform duration-200 group-hover:translate-x-1">
+                              <ChevronRightIcon className="w-3 h-3" />
+                            </div>
                           </button>
                         </div>
                       </div>
@@ -304,7 +341,11 @@ export const Challenges = ({ navigateTo }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Challenge Description & Code */}
             <div className="space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <div 
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all duration-500 transform ${
+                  selectedChallenge ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
@@ -316,7 +357,7 @@ export const Challenges = ({ navigateTo }) => {
                   </div>
                   <button 
                     onClick={() => setSelectedChallenge(null)}
-                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-110"
                   >
                     <XIcon className="w-5 h-5" />
                   </button>
@@ -328,21 +369,21 @@ export const Challenges = ({ navigateTo }) => {
                 <div className="flex gap-3 mb-4">
                   <button 
                     onClick={runTests}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 transform hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <PlayCircleIcon className="w-4 h-4" />
                     <span>Run Tests</span>
                   </button>
                   <button 
                     onClick={() => setShowHint(!showHint)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200 transform hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <LightbulbIcon className="w-4 h-4" />
                     <span>Hint</span>
                   </button>
                   <button 
                     onClick={() => setUserCode(selectedChallenge.solution)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 transform hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <CodeIcon className="w-4 h-4" />
                     <span>Solution</span>
@@ -350,9 +391,13 @@ export const Challenges = ({ navigateTo }) => {
                 </div>
 
                 {showHint && (
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                  <div 
+                    className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4 animate-slideDown"
+                  >
                     <div className="flex items-start space-x-2">
-                      <LightbulbIcon className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <div className="animate-pulse">
+                        <LightbulbIcon className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      </div>
                       <div>
                         <p className="text-yellow-800 dark:text-yellow-200 font-medium">Hint:</p>
                         <p className="text-yellow-700 dark:text-yellow-300">{selectedChallenge.hint}</p>
@@ -363,9 +408,16 @@ export const Challenges = ({ navigateTo }) => {
               </div>
 
               {/* Code Editor */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+              <div 
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-all duration-500 delay-200 transform ${
+                  selectedChallenge ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}
+              >
                 <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-                  <h3 className="font-medium text-gray-700 dark:text-gray-300">Your Solution</h3>
+                  <h3 className="font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                    <CodeIcon className="w-4 h-4 mr-2" />
+                    Your Solution
+                  </h3>
                 </div>
                 <div style={{ height: '300px' }}>
                   <CodeEditor
@@ -379,7 +431,11 @@ export const Challenges = ({ navigateTo }) => {
             </div>
 
             {/* Test Results */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div 
+              className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all duration-500 delay-400 transform ${
+                selectedChallenge ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
               <div className="flex items-center space-x-2 mb-4">
                 <PlayCircleIcon className="w-5 h-5 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white">
@@ -389,7 +445,9 @@ export const Challenges = ({ navigateTo }) => {
               
               {testResults.length === 0 ? (
                 <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  <PlayCircleIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <div className="animate-pulse mb-4">
+                    <PlayCircleIcon className="w-12 h-12 text-gray-400 mx-auto" />
+                  </div>
                   <p>Run tests to see results...</p>
                 </div>
               ) : (
@@ -397,18 +455,21 @@ export const Challenges = ({ navigateTo }) => {
                   {testResults.map((result, index) => (
                     <div 
                       key={index}
-                      className={`p-4 rounded-lg border ${
+                      className={`p-4 rounded-lg border transition-all duration-300 transform hover:scale-105 ${
                         result.passed 
                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
                           : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                       }`}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <div className="flex items-center mb-2">
-                        {result.passed ? (
-                          <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-                        ) : (
-                          <XCircleIcon className="w-5 h-5 text-red-500 mr-2" />
-                        )}
+                        <div className="animate-bounce mr-2">
+                          {result.passed ? (
+                            <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <XCircleIcon className="w-5 h-5 text-red-500" />
+                          )}
+                        </div>
                         <span className="font-medium">Test {result.testNum}</span>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -428,7 +489,7 @@ export const Challenges = ({ navigateTo }) => {
                   ))}
                   
                   {testResults.every(r => r.passed) && (
-                    <div className="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg p-4 text-center">
+                    <div className="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg p-4 text-center animate-bounce">
                       <TrophyIcon className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
                       <h4 className="font-bold text-green-800 dark:text-green-200">Congratulations!</h4>
                       <p className="text-green-700 dark:text-green-300">All tests passed!</p>
@@ -440,6 +501,23 @@ export const Challenges = ({ navigateTo }) => {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
