@@ -19,7 +19,7 @@ const Guide = React.lazy(() =>
 );
 
 const Playground = React.lazy(() => 
-  import('./components/playground/Playground').then(module => ({ default: module.Playground }))
+  import('./components/playground/EnhancedPlayground').then(module => ({ default: module.Playground }))
 );
 
 // Error Boundary Component
