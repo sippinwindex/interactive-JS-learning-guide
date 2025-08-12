@@ -87,12 +87,12 @@ function Person(name, age) {
 
 // Adding methods to prototype
 Person.prototype.greet = function() {
-    return \`Hello, I'm \${this.name} and I'm \${this.age} years old.\`;
+    return 'Hello, I am ' + this.name + ' and I am ' + this.age + ' years old.';
 };
 
 Person.prototype.haveBirthday = function() {
     this.age++;
-    return \`Happy birthday! Now I'm \${this.age}.\`;
+    return 'Happy birthday! Now I am ' + this.age + '.';
 };
 
 // ES6 Class syntax (syntactic sugar over prototypes)
@@ -104,7 +104,7 @@ class Developer extends Person {
     }
     
     code() {
-        return \`Writing \${this.language} code!\`;
+        return 'Writing ' + this.language + ' code!';
     }
     
     addProject(project) {
@@ -124,7 +124,7 @@ class Developer extends Person {
     
     // Override parent method
     greet() {
-        return super.greet() + \` I develop in \${this.language}.\`;
+        return super.greet() + ' I develop in ' + this.language + '.';
     }
 }
 
@@ -137,7 +137,7 @@ console.log(dev.greet());  // Inherited and overridden method
 console.log(dev.code());   // Own method
 
 dev.addProject('Portfolio').addProject('E-commerce');
-console.log(\`Projects: \${dev.projectCount}\`);
+console.log('Projects: ' + dev.projectCount);
 
 // Prototype chain verification
 console.log('dev instanceof Developer:', dev instanceof Developer); // true
@@ -194,7 +194,7 @@ class RequestBatcher {
         this.queue.length = 0;
         this.isProcessing = false;
         
-        console.log(\`Processing batch of \${batch.length} requests:`, batch);
+        console.log('Processing batch of ' + batch.length + ' requests:', batch);
         return batch;
     }
 }
@@ -213,7 +213,7 @@ function demonstrateEventLoop() {
     
     function recursiveFunction(n) {
         if (n <= 0) return;
-        console.log(\`Recursive call: \${n}\`);
+        console.log('Recursive call: ' + n);
         recursiveFunction(n - 1);
     }
     
