@@ -1,257 +1,205 @@
+// src/front/pages/Documentation.jsx - Main Documentation Component
 import React, { useState } from 'react';
+import { BasicsSection } from '../components/docs/BasicsSection';
+import { ES6Section } from '../components/docs/ES6Section';
+import { AdvancedSection } from '../components/docs/AdvancedSection';
+import { AsyncSection } from '../components/docs/AsyncSection';
+import { ErrorHandlingSection } from '../components/docs/ErrorHandlingSection';
+import { PerformanceSection } from '../components/docs/PerformanceSection';
+import { TestingSection } from '../components/docs/TestingSection';
+import { SecuritySection } from '../components/docs/SecuritySection';
+import { PatternsSection } from '../components/docs/PatternsSection';
+import { ModernAPIsSection } from '../components/docs/ModernAPIsSection';
 
 export const Documentation = ({ navigateTo }) => {
   const [activeSection, setActiveSection] = useState('basics');
   const [runOutput, setRunOutput] = useState('');
 
+  // Section configuration
   const sections = {
     basics: {
       title: 'JavaScript Basics',
       icon: '⭐',
-      content: [
-        {
-          title: 'Variables and Constants',
-          description: 'Learn how to declare and use variables in JavaScript',
-          code: `// Variables can be declared using let, const, or var
-let name = "John";        // Can be reassigned
-const age = 30;          // Cannot be reassigned  
-var city = "New York";   // Old way, avoid using
-
-// Data types
-let number = 42;
-let text = "Hello";
-let isActive = true;
-let nothing = null;
-let notDefined = undefined;
-
-console.log(typeof number);  // "number"
-console.log(typeof text);    // "string"
-console.log(typeof isActive); // "boolean"`,
-        },
-        {
-          title: 'Functions',
-          description: 'Different ways to create and use functions',
-          code: `// Function declaration
-function greet(name) {
-    return 'Hello, ' + name + '!';
-}
-
-// Arrow function
-const add = (a, b) => a + b;
-
-// Function with default parameters
-function power(base, exponent = 2) {
-    return Math.pow(base, exponent);
-}
-
-console.log(greet('Alice'));     // "Hello, Alice!"
-console.log(add(5, 3));          // 8
-console.log(power(3));           // 9`,
-        }
-      ]
+      component: BasicsSection
     },
-    arrays: {
-      title: 'Arrays & Methods',
-      icon: '📋',
-      content: [
-        {
-          title: 'Array Methods',
-          description: 'Powerful array transformation methods',
-          code: `const numbers = [1, 2, 3, 4, 5];
-
-// Map - transform each element
-const doubled = numbers.map(n => n * 2);
-console.log(doubled); // [2, 4, 6, 8, 10]
-
-// Filter - keep elements that pass test
-const evens = numbers.filter(n => n % 2 === 0);
-console.log(evens); // [2, 4]
-
-// Reduce - combine all elements
-const sum = numbers.reduce((acc, n) => acc + n, 0);
-console.log(sum); // 15`,
-        },
-        {
-          title: 'Array Creation and Access',
-          description: 'Creating and accessing array elements',
-          code: `// Creating arrays
-const fruits = ['apple', 'banana', 'orange'];
-const numbers = [1, 2, 3, 4, 5];
-const mixed = [1, 'hello', true, null];
-
-// Accessing elements
-console.log(fruits[0]);           // 'apple'
-console.log(fruits[fruits.length - 1]); // 'orange'
-
-// Modifying arrays
-fruits.push('mango');              // Add to end
-fruits.unshift('strawberry');      // Add to beginning
-fruits.pop();                      // Remove from end
-fruits.shift();                    // Remove from beginning
-
-console.log(fruits);`,
-        }
-      ]
+    es6plus: {
+      title: 'ES6+ Modern Features',
+      icon: '🚀',
+      component: ES6Section
     },
-    objects: {
-      title: 'Objects',
-      icon: '📦',
-      content: [
-        {
-          title: 'Object Basics',
-          description: 'Creating and manipulating objects',
-          code: `// Object literal
-const person = {
-    name: 'John Doe',
-    age: 30,
-    greet() {
-        return \`Hello, I'm \${this.name}\`;
-    }
-};
-
-// Destructuring
-const { name, age } = person;
-
-// Spread operator
-const updatedPerson = { ...person, city: 'New York' };
-
-console.log(person.greet());
-console.log('Name:', name, 'Age:', age);
-console.log('Updated:', updatedPerson);`,
-        }
-      ]
-    },
-    dom: {
-      title: 'DOM Manipulation',
-      icon: '🌐',
-      content: [
-        {
-          title: 'DOM Basics',
-          description: 'Interacting with HTML elements',
-          code: `// Selecting elements
-const element = document.getElementById('myId');
-const elements = document.getElementsByClassName('myClass');
-const first = document.querySelector('.class');
-const all = document.querySelectorAll('div');
-
-// Modifying content
-element.textContent = 'New text';
-element.innerHTML = '<strong>Bold text</strong>';
-
-// Modifying styles
-element.style.color = 'blue';
-element.style.backgroundColor = '#f0f0f0';
-element.classList.add('active');
-
-// Event listeners
-element.addEventListener('click', function(e) {
-    console.log('Clicked!', e.target);
-});
-
-console.log('DOM manipulation examples ready!');`,
-        }
-      ]
+    advanced: {
+      title: 'Advanced Concepts',
+      icon: '🧠',
+      component: AdvancedSection
     },
     async: {
       title: 'Async Programming',
       icon: '⚡',
-      content: [
-        {
-          title: 'Promises & Async/Await',
-          description: 'Handling asynchronous operations',
-          code: `// Promise example
-function fetchData() {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            resolve("Data fetched successfully!");
-        }, 1000);
-    });
-}
-
-// Using async/await
-async function getData() {
-    try {
-        console.log('Fetching data...');
-        const data = await fetchData();
-        console.log(data);
-    } catch (error) {
-        console.error("Error:", error);
-    }
-}
-
-getData();
-
-// Promise chaining
-fetchData()
-    .then(data => {
-        console.log('Promise result:', data);
-        return 'Next step';
-    })
-    .then(nextData => console.log(nextData))
-    .catch(error => console.error(error));`,
-        }
-      ]
+      component: AsyncSection
+    },
+    errorhandling: {
+      title: 'Error Handling',
+      icon: '🛡️',
+      component: ErrorHandlingSection
+    },
+    performance: {
+      title: 'Performance Optimization',
+      icon: '⚡',
+      component: PerformanceSection
+    },
+    testing: {
+      title: 'Testing & Debugging',
+      icon: '🧪',
+      component: TestingSection
+    },
+    security: {
+      title: 'Security Best Practices',
+      icon: '🔒',
+      component: SecuritySection
+    },
+    patterns: {
+      title: 'Design Patterns',
+      icon: '🏗️',
+      component: PatternsSection
+    },
+    modern: {
+      title: 'Modern JavaScript APIs',
+      icon: '🌐',
+      component: ModernAPIsSection
     }
   };
 
+  // Code execution utility
   const runCode = (code) => {
     try {
       const logs = [];
       const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
       
+      // Capture all console outputs
       console.log = (...args) => {
-        logs.push(args.map(arg => 
+        logs.push(['log', args.map(arg => 
           typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-        ).join(' '));
+        ).join(' ')]);
+      };
+      
+      console.warn = (...args) => {
+        logs.push(['warn', args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ')]);
+      };
+      
+      console.error = (...args) => {
+        logs.push(['error', args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ')]);
       };
 
+      // Execute code
       eval(code);
+      
+      // Restore console
       console.log = originalLog;
-      setRunOutput(logs.join('\n') || 'Code executed successfully');
+      console.warn = originalWarn;
+      console.error = originalError;
+      
+      // Format output
+      if (logs.length === 0) {
+        setRunOutput('Code executed successfully (no output)');
+      } else {
+        const formattedOutput = logs.map(([type, message]) => {
+          const prefix = type === 'error' ? '❌ ' : type === 'warn' ? '⚠️ ' : '📝 ';
+          return `${prefix}${message}`;
+        }).join('\n');
+        setRunOutput(formattedOutput);
+      }
     } catch (error) {
-      setRunOutput(`Error: ${error.message}`);
+      setRunOutput(`❌ Error: ${error.message}`);
     }
   };
+
+  // Get current section component
+  const CurrentSectionComponent = sections[activeSection]?.component;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            📚 Complete JavaScript Documentation
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            Master JavaScript from fundamentals to advanced concepts with interactive examples, 
+            best practices, and real-world patterns.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
+          {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sticky top-24">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sticky top-24 shadow-lg">
               <h5 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-4">
-                Topics
+                JavaScript Guide
               </h5>
-              <nav className="space-y-2">
+              
+              {/* Progress Indicator */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span>Progress</span>
+                  <span>{Object.keys(sections).indexOf(activeSection) + 1} / {Object.keys(sections).length}</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${((Object.keys(sections).indexOf(activeSection) + 1) / Object.keys(sections).length) * 100}%` 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Section Navigation */}
+              <nav className="space-y-2 mb-6">
                 {Object.entries(sections).map(([key, section]) => (
                   <button
                     key={key}
                     className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
                       activeSection === key 
-                        ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white' 
+                        ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-md' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                    onClick={() => setActiveSection(key)}
+                    onClick={() => {
+                      setActiveSection(key);
+                      setRunOutput(''); // Clear output when switching sections
+                    }}
                   >
                     <span className="mr-2">{section.icon}</span>
-                    {section.title}
+                    <span className="text-sm">{section.title}</span>
                   </button>
                 ))}
               </nav>
               
-              <div className="mt-6 space-y-2">
+              {/* Quick Actions */}
+              <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                 <button 
                   onClick={() => navigateTo('playground')}
-                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
                 >
                   🎮 Try Playground
                 </button>
                 <button 
                   onClick={() => navigateTo('challenges')}
-                  className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                  className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium"
                 >
                   🏆 Try Challenges
+                </button>
+                <button 
+                  onClick={() => navigateTo('guide')}
+                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                >
+                  🧭 Learning Path
                 </button>
               </div>
             </div>
@@ -259,80 +207,97 @@ fetchData()
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">
-                {sections[activeSection].title}
-              </h2>
-
-              {sections[activeSection].content.map((item, index) => (
-                <div key={index} className="mb-8">
-                  <h4 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">
-                    {item.title}
-                  </h4>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    {item.description}
-                  </p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+              {/* Section Header */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">{sections[activeSection]?.icon}</span>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                      {sections[activeSection]?.title}
+                    </h2>
+                  </div>
                   
-                  <div className="bg-gray-900 rounded-lg overflow-hidden">
-                    <div className="flex justify-between items-center px-4 py-2 bg-gray-800">
-                      <span className="text-gray-400 text-sm">JavaScript</span>
-                      <div className="space-x-2">
-                        <button 
-                          className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors"
-                          onClick={() => runCode(item.code)}
-                        >
-                          ▶ Run
-                        </button>
-                        <button 
-                          className="px-3 py-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-600 transition-colors"
-                          onClick={() => navigator.clipboard.writeText(item.code)}
-                        >
-                          📋 Copy
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <pre className="p-4 text-gray-300 overflow-x-auto text-sm">
-                      <code>{item.code}</code>
-                    </pre>
-
-                    {runOutput && (
-                      <div className="border-t border-gray-700 p-4">
-                        <h6 className="text-sm text-gray-400 mb-2">Output:</h6>
-                        <pre className="text-green-400 text-sm">{runOutput}</pre>
-                      </div>
-                    )}
+                  {/* Section Navigation */}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        const keys = Object.keys(sections);
+                        const currentIndex = keys.indexOf(activeSection);
+                        if (currentIndex > 0) {
+                          setActiveSection(keys[currentIndex - 1]);
+                          setRunOutput('');
+                        }
+                      }}
+                      disabled={Object.keys(sections).indexOf(activeSection) === 0}
+                      className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      onClick={() => {
+                        const keys = Object.keys(sections);
+                        const currentIndex = keys.indexOf(activeSection);
+                        if (currentIndex < keys.length - 1) {
+                          setActiveSection(keys[currentIndex + 1]);
+                          setRunOutput('');
+                        }
+                      }}
+                      disabled={Object.keys(sections).indexOf(activeSection) === Object.keys(sections).length - 1}
+                      className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Next →
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
 
-              {/* Next Steps */}
-              <div className="mt-8 p-6 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl">
-                <h5 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">
-                  Ready to Practice?
-                </h5>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Now that you've learned the basics, try these:
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button 
-                    onClick={() => navigateTo('playground')}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Try in Playground
-                  </button>
-                  <button 
-                    onClick={() => navigateTo('challenges')}
-                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-                  >
-                    Solve Challenges
-                  </button>
-                  <button 
-                    onClick={() => navigateTo('guide')}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Complete Guide
-                  </button>
+              {/* Section Content */}
+              <div className="p-6">
+                {CurrentSectionComponent ? (
+                  <CurrentSectionComponent 
+                    runCode={runCode} 
+                    runOutput={runOutput}
+                    navigateTo={navigateTo}
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🚧</div>
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      Section Coming Soon
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      This section is under development. Please check back later!
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Navigation */}
+              <div className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
+                      🎯 Ready to Practice?
+                    </h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Apply what you've learned with hands-on exercises
+                    </p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button 
+                      onClick={() => navigateTo('playground')}
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+                    >
+                      Code Now
+                    </button>
+                    <button 
+                      onClick={() => navigateTo('challenges')}
+                      className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
+                    >
+                      Take Challenge
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

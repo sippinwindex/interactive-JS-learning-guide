@@ -66,15 +66,15 @@ const FileExplorer = ({ files, activeFile, dispatch }) => {
   }, [contextMenu]);
 
   return (
-    <div className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+    <div className="h-full bg-gray-800 flex flex-col">
       {/* Header */}
-      <div className="p-3 border-b border-gray-700 flex items-center justify-between">
+      <div className="p-3 border-b border-gray-700 flex items-center justify-between bg-gray-800">
         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
           Explorer
         </span>
         <button
           onClick={() => setShowNewFileInput(true)}
-          className="text-gray-400 hover:text-white p-1"
+          className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors"
           title="New File"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ const FileExplorer = ({ files, activeFile, dispatch }) => {
       <div className="flex-1 overflow-y-auto">
         {/* New File Input */}
         {showNewFileInput && (
-          <div className="p-2 border-b border-gray-700">
+          <div className="p-3 border-b border-gray-700 bg-gray-750">
             <input
               type="text"
               value={newFileName}
@@ -106,75 +106,102 @@ const FileExplorer = ({ files, activeFile, dispatch }) => {
                 }
               }}
               placeholder="filename.js"
-              className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               autoFocus
             />
           </div>
         )}
 
         {/* Files */}
-        {Object.keys(files).sort().map(filename => (
-          <div key={filename}>
-            {renamingFile === filename ? (
-              <div className="p-2">
-                <input
-                  type="text"
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleRename(filename);
-                    if (e.key === 'Escape') {
-                      setRenamingFile(null);
-                      setRenameValue('');
-                    }
-                  }}
-                  onBlur={() => handleRename(filename)}
-                  className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-                  autoFocus
-                />
-              </div>
-            ) : (
-              <div
-                className={`flex items-center px-3 py-1.5 hover:bg-gray-700 cursor-pointer transition-colors ${
-                  activeFile === filename ? 'bg-gray-700 border-l-2 border-blue-500' : ''
-                }`}
-                onClick={() => handleFileClick(filename)}
-                onContextMenu={(e) => handleContextMenu(e, filename)}
-              >
-                <span className="mr-2 text-lg">{getFileIcon(filename)}</span>
-                <span className="text-sm text-gray-300 truncate">{filename}</span>
-                {files[filename].modifiedAt && activeFile === filename && (
-                  <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full"></span>
-                )}
-              </div>
-            )}
+        <div className="py-1">
+          {Object.keys(files).sort().map(filename => (
+            <div key={filename}>
+              {renamingFile === filename ? (
+                <div className="px-3 py-1">
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRename(filename);
+                      if (e.key === 'Escape') {
+                        setRenamingFile(null);
+                        setRenameValue('');
+                      }
+                    }}
+                    onBlur={() => handleRename(filename)}
+                    className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <button
+                  className={`w-full flex items-center px-3 py-2 hover:bg-gray-700 cursor-pointer transition-colors text-left ${
+                    activeFile === filename 
+                      ? 'bg-gray-700 border-l-2 border-blue-500 text-white' 
+                      : 'text-gray-300 hover:text-white'
+                  }`}
+                  onClick={() => handleFileClick(filename)}
+                  onContextMenu={(e) => handleContextMenu(e, filename)}
+                >
+                  <span className="mr-2 text-base flex-shrink-0">{getFileIcon(filename)}</span>
+                  <span className="text-sm truncate flex-1">{filename}</span>
+                  {files[filename].modifiedAt && activeFile === filename && (
+                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></span>
+                  )}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {Object.keys(files).length === 0 && (
+          <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
+            <div className="text-3xl mb-3">📁</div>
+            <p className="text-sm mb-3">No files yet</p>
+            <button
+              onClick={() => setShowNewFileInput(true)}
+              className="text-xs text-blue-400 hover:text-blue-300 underline"
+            >
+              Create your first file
+            </button>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Context Menu */}
       {contextMenu && (
-        <div
-          className="fixed bg-gray-700 rounded shadow-lg py-1 z-50"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          <button
-            onClick={() => {
-              setRenamingFile(contextMenu.filename);
-              setRenameValue(contextMenu.filename);
-              setContextMenu(null);
-            }}
-            className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setContextMenu(null)}
+          ></div>
+          
+          {/* Menu */}
+          <div
+            className="fixed bg-gray-700 rounded-md shadow-lg py-1 z-50 border border-gray-600 min-w-[120px]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            Rename
-          </button>
-          <button
-            onClick={() => handleDelete(contextMenu.filename)}
-            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600"
-          >
-            Delete
-          </button>
-        </div>
+            <button
+              onClick={() => {
+                setRenamingFile(contextMenu.filename);
+                setRenameValue(contextMenu.filename);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors"
+            >
+              Rename
+            </button>
+            <button
+              onClick={() => handleDelete(contextMenu.filename)}
+              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,14 +1,14 @@
-// src/front/pages/Playground.jsx
+// src/front/components/playground/Playground.jsx
 import React, { useState, useReducer, useEffect, useRef } from 'react';
-import TopBar from '../components/playground/TopBar';
-import FileExplorer from '../components/playground/FileExplorer';
-import EditorTabs from '../components/playground/EditorTabs';
-import MonacoEditorWrapper from '../components/playground/MonacoEditorWrapper';
-import OutputPanel from '../components/playground/OutputPanel';
-import StatusBar from '../components/playground/StatusBar';
-import { playgroundReducer, initialState } from '../components/playground/utils/playgroundReducer';
-import { runCode } from '../components/playground/utils/codeRunner';
-import { defaultFiles } from '../components/playground/templates/defaultFiles';
+import TopBar from './TopBar';
+import FileExplorer from './FileExplorer';
+import EditorTabs from './EditorTabs';
+import MonacoEditorWrapper from './MonacoEditorWrapper';
+import OutputPanel from './OutputPanel';
+import StatusBar from './StatusBar';
+import { playgroundReducer, initialState } from './utils/playgroundReducer';
+import { runCode } from './utils/codeRunner';
+import { defaultFiles } from './templates/defaultFiles';
 
 export const Playground = ({ navigateTo, isDarkMode = false }) => {
   const [state, dispatch] = useReducer(playgroundReducer, initialState);
@@ -82,71 +82,100 @@ export const Playground = ({ navigateTo, isDarkMode = false }) => {
 
   return (
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
-      <TopBar
-        isRunning={isRunning}
-        onRun={handleRunCode}
-        fontSize={fontSize}
-        setFontSize={setFontSize}
-        layoutMode={layoutMode}
-        setLayoutMode={setLayoutMode}
-        showConsole={showConsole}
-        setShowConsole={setShowConsole}
-        editorTheme={editorTheme}
-        setEditorTheme={setEditorTheme}
-        showFileExplorer={showFileExplorer}
-        setShowFileExplorer={setShowFileExplorer}
-        files={state.files}
-        dispatch={dispatch}
-      />
+      {/* Top Bar - Fixed height with proper padding */}
+      <div className="flex-shrink-0 h-16 bg-gray-800 border-b border-gray-700">
+        <TopBar
+          isRunning={isRunning}
+          onRun={handleRunCode}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          layoutMode={layoutMode}
+          setLayoutMode={setLayoutMode}
+          showConsole={showConsole}
+          setShowConsole={setShowConsole}
+          editorTheme={editorTheme}
+          setEditorTheme={setEditorTheme}
+          showFileExplorer={showFileExplorer}
+          setShowFileExplorer={setShowFileExplorer}
+          files={state.files}
+          dispatch={dispatch}
+        />
+      </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* File Explorer - Collapsible with proper spacing */}
         {showFileExplorer && (
-          <FileExplorer
-            files={state.files}
-            activeFile={state.activeFile}
-            dispatch={dispatch}
-          />
-        )}
-
-        <div className={`flex-1 flex ${layoutMode === 'vertical' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
-          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-gray-900`}>
-            <EditorTabs
+          <div className="w-64 bg-gray-800 border-r border-gray-700 flex-shrink-0">
+            <FileExplorer
               files={state.files}
-              openTabs={state.openTabs}
               activeFile={state.activeFile}
               dispatch={dispatch}
             />
-            
-            {state.activeFile && (
-              <MonacoEditorWrapper
-                file={state.files[state.activeFile]}
-                filename={state.activeFile}
-                fontSize={fontSize}
-                theme={editorTheme}
-                onChange={(value) => dispatch({
-                  type: 'UPDATE_FILE',
-                  payload: { filename: state.activeFile, content: value }
-                })}
-                editorRef={editorRef}
+          </div>
+        )}
+
+        {/* Editor and Output Area */}
+        <div className={`flex-1 flex ${layoutMode === 'vertical' ? 'flex-col' : 'flex-row'} overflow-hidden`}>
+          
+          {/* Editor Section */}
+          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-gray-900 border-r border-gray-700`}>
+            {/* Editor Tabs */}
+            <div className="flex-shrink-0 bg-gray-800 border-b border-gray-700">
+              <EditorTabs
+                files={state.files}
+                openTabs={state.openTabs}
+                activeFile={state.activeFile}
+                dispatch={dispatch}
               />
-            )}
+            </div>
+            
+            {/* Monaco Editor */}
+            <div className="flex-1 overflow-hidden">
+              {state.activeFile ? (
+                <MonacoEditorWrapper
+                  file={state.files[state.activeFile]}
+                  filename={state.activeFile}
+                  fontSize={fontSize}
+                  theme={editorTheme}
+                  onChange={(value) => dispatch({
+                    type: 'UPDATE_FILE',
+                    payload: { filename: state.activeFile, content: value }
+                  })}
+                  editorRef={editorRef}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center bg-gray-900 text-gray-500">
+                  <div className="text-center">
+                    <div className="text-4xl mb-4">📁</div>
+                    <p>No file selected</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <OutputPanel
-            layoutMode={layoutMode}
-            showConsole={showConsole}
-            consoleOutput={consoleOutput}
-            onClearConsole={() => setConsoleOutput([])}
-            iframeRef={iframeRef}
-          />
+          {/* Output Panel */}
+          <div className={`${layoutMode === 'vertical' ? 'h-1/2' : 'w-1/2'} flex flex-col bg-white`}>
+            <OutputPanel
+              layoutMode={layoutMode}
+              showConsole={showConsole}
+              consoleOutput={consoleOutput}
+              onClearConsole={() => setConsoleOutput([])}
+              iframeRef={iframeRef}
+            />
+          </div>
         </div>
       </div>
 
-      <StatusBar
-        activeFile={state.activeFile}
-        files={state.files}
-        cursorPosition={state.cursorPosition}
-      />
+      {/* Status Bar - Fixed height */}
+      <div className="flex-shrink-0 h-8 bg-gray-800 border-t border-gray-700">
+        <StatusBar
+          activeFile={state.activeFile}
+          files={state.files}
+          cursorPosition={state.cursorPosition}
+        />
+      </div>
     </div>
   );
 };
