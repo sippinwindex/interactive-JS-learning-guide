@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { Navbar } from './components/Navbar';
+import { HeartIcon } from './components/ui/Icons';
 
 // Direct imports instead of lazy loading to avoid path issues
 import { HomePage } from './pages/Home';
@@ -250,7 +251,7 @@ const SimpleRouter = () => {
             
             <div className="border-t border-gray-200 dark:border-gray-700 pt-8 text-center">
               <p className="text-gray-600 dark:text-gray-400">
-                Built with {{'❤️'}} for JavaScript learners everywhere
+                Built with <HeartIcon className="w-4 h-4 inline text-red-500" /> for JavaScript learners everywhere
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                 © 2024 JS Master - Interactive JavaScript Learning Platform
