@@ -3,7 +3,7 @@ import { Navbar } from './components/Navbar';
 import { HeartIcon } from './components/ui/Icons';
 
 // Direct imports instead of lazy loading to avoid path issues
-import { HomePage } from './pages/Home';
+import HomePage from './pages/Home';
 import { Documentation } from './pages/Documentation';
 import { Challenges } from './pages/Challenges';
 import { Guide } from './pages/Guide';
