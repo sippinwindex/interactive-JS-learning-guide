@@ -1,19 +1,13 @@
-// src/front/pages/Documentation.jsx - Main Documentation Component
+// src/front/pages/Documentation.jsx - Fixed Version
 import React, { useState } from 'react';
 import { BasicsSection } from '../components/docs/BasicsSection';
 import { ES6Section } from '../components/docs/ES6Section';
 import { AdvancedSection } from '../components/docs/AdvancedSection';
 import { AsyncSection } from '../components/docs/AsyncSection';
-import { ErrorHandlingSection } from '../components/docs/ErrorHandlingSection';
-import { PerformanceSection } from '../components/docs/PerformanceSection';
-import { TestingSection } from '../components/docs/TestingSection';
-import { SecuritySection } from '../components/docs/SecuritySection';
-import { PatternsSection } from '../components/docs/PatternsSection';
-import { ModernAPIsSection } from '../components/docs/ModernAPIsSection';
 
 export const Documentation = ({ navigateTo }) => {
   const [activeSection, setActiveSection] = useState('basics');
-  const [runOutput, setRunOutput] = useState('');
+  const [runOutput, setRunOutput] = useState(null); // Initialize as null
 
   // Section configuration
   const sections = {
@@ -36,40 +30,10 @@ export const Documentation = ({ navigateTo }) => {
       title: 'Async Programming',
       icon: '⚡',
       component: AsyncSection
-    },
-    errorhandling: {
-      title: 'Error Handling',
-      icon: '🛡️',
-      component: ErrorHandlingSection
-    },
-    performance: {
-      title: 'Performance Optimization',
-      icon: '⚡',
-      component: PerformanceSection
-    },
-    testing: {
-      title: 'Testing & Debugging',
-      icon: '🧪',
-      component: TestingSection
-    },
-    security: {
-      title: 'Security Best Practices',
-      icon: '🔒',
-      component: SecuritySection
-    },
-    patterns: {
-      title: 'Design Patterns',
-      icon: '🏗️',
-      component: PatternsSection
-    },
-    modern: {
-      title: 'Modern JavaScript APIs',
-      icon: '🌐',
-      component: ModernAPIsSection
     }
   };
 
-  // Code execution utility
+  // Fixed code execution utility - this is the key fix!
   const runCode = (code) => {
     try {
       const logs = [];
@@ -96,15 +60,15 @@ export const Documentation = ({ navigateTo }) => {
         ).join(' ')]);
       };
 
-      // Execute code
-      eval(code);
+      // Execute code in try-catch
+      const result = eval(code);
       
       // Restore console
       console.log = originalLog;
       console.warn = originalWarn;
       console.error = originalError;
       
-      // Format output
+      // Format output - this is crucial!
       if (logs.length === 0) {
         setRunOutput('Code executed successfully (no output)');
       } else {
@@ -114,8 +78,14 @@ export const Documentation = ({ navigateTo }) => {
         }).join('\n');
         setRunOutput(formattedOutput);
       }
+      
+      // If code returns a value, include it
+      if (result !== undefined) {
+        const resultOutput = `\n📤 Return value: ${typeof result === 'object' ? JSON.stringify(result, null, 2) : result}`;
+        setRunOutput(prev => (prev || '') + resultOutput);
+      }
     } catch (error) {
-      setRunOutput(`❌ Error: ${error.message}`);
+      setRunOutput(`❌ Error: ${error.message}\n\nStack trace:\n${error.stack}`);
     }
   };
 
@@ -172,7 +142,7 @@ export const Documentation = ({ navigateTo }) => {
                     }`}
                     onClick={() => {
                       setActiveSection(key);
-                      setRunOutput(''); // Clear output when switching sections
+                      setRunOutput(null); // Clear output when switching sections
                     }}
                   >
                     <span className="mr-2">{section.icon}</span>
@@ -226,7 +196,7 @@ export const Documentation = ({ navigateTo }) => {
                         const currentIndex = keys.indexOf(activeSection);
                         if (currentIndex > 0) {
                           setActiveSection(keys[currentIndex - 1]);
-                          setRunOutput('');
+                          setRunOutput(null);
                         }
                       }}
                       disabled={Object.keys(sections).indexOf(activeSection) === 0}
@@ -240,7 +210,7 @@ export const Documentation = ({ navigateTo }) => {
                         const currentIndex = keys.indexOf(activeSection);
                         if (currentIndex < keys.length - 1) {
                           setActiveSection(keys[currentIndex + 1]);
-                          setRunOutput('');
+                          setRunOutput(null);
                         }
                       }}
                       disabled={Object.keys(sections).indexOf(activeSection) === Object.keys(sections).length - 1}

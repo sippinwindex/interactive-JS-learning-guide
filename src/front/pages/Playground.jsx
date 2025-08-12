@@ -9,6 +9,8 @@ import StatusBar from './StatusBar';
 import { playgroundReducer, initialState } from './utils/playgroundReducer';
 import { runCode } from './utils/codeRunner';
 import { defaultFiles } from './templates/defaultFiles';
+// src/front/pages/Playground.jsx - Fixed version (this should just re-export the component)
+export { Playground } from '../components/playground/Playground';
 
 export const Playground = ({ navigateTo, isDarkMode = false }) => {
   const [state, dispatch] = useReducer(playgroundReducer, initialState);
