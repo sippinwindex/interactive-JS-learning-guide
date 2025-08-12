@@ -147,15 +147,11 @@ console.log('JavaScript loaded and ready!');`,
   const [isConsoleVisible, setIsConsoleVisible] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [selectedLibraries, setSelectedLibraries] = useState([]);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [splitView, setSplitView] = useState('horizontal'); // horizontal or vertical
-  const [previewSize, setPreviewSize] = useState(50); // percentage
   
   // Refs
   const iframeRef = useRef(null);
   const editorRef = useRef(null);
-  const containerRef = useRef(null);
-  const resizeRef = useRef(null);
   const autoSaveRef = useRef(null);
 
   // Available libraries
@@ -305,64 +301,6 @@ console.log('JavaScript loaded and ready!');`,
     }
   }, []);
 
-  // Insert snippet
-  const insertSnippet = useCallback((snippetKey) => {
-    if (editorRef.current && files[activeFile]) {
-      const language = files[activeFile].language;
-      const snippet = codeSnippets[language]?.[snippetKey];
-      
-      if (snippet) {
-        const editor = editorRef.current;
-        const position = editor.getPosition();
-        const range = new monaco.Range(
-          position.lineNumber,
-          position.column,
-          position.lineNumber,
-          position.column
-        );
-        
-        editor.executeEdits('', [{
-          range: range,
-          text: snippet,
-          forceMoveMarkers: true
-        }]);
-        
-        editor.focus();
-      }
-    }
-  }, [files, activeFile]);
-
-  // Toggle fullscreen
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  }, []);
-
-  // Render file icon
-  const getFileIcon = (filename) => {
-    const ext = filename.split('.').pop().toLowerCase();
-    const icons = {
-      html: '📄',
-      css: '🎨',
-      js: '📜',
-      jsx: '⚛️',
-      ts: '📘',
-      tsx: '⚛️',
-      json: '📋',
-      md: '📝',
-      txt: '📃',
-      svg: '🖼️',
-      vue: '💚',
-      py: '🐍'
-    };
-    return icons[ext] || '📄';
-  };
-
   // Get console message color
   const getConsoleColor = (method) => {
     const colors = {
@@ -375,28 +313,43 @@ console.log('JavaScript loaded and ready!');`,
     return colors[method] || 'text-gray-300';
   };
 
+  // Refresh preview
+  const refreshPreview = useCallback(() => {
+    if (iframeRef.current) {
+      const result = enhancedRunCode(files, iframeRef.current, {
+        enableConsoleCapture: true,
+        enableErrorHandling: true,
+        libraries: selectedLibraries
+      });
+      
+      if (result.error) {
+        addConsoleMessage('error', `Error: ${result.error}`);
+      }
+    }
+  }, [files, selectedLibraries]);
+
   return (
-    <div ref={containerRef} className="h-screen flex flex-col bg-gray-900 text-white">
-      {/* Top Toolbar */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden">
+      {/* Top Toolbar - Fixed positioning */}
+      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0 relative z-10">
+        <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
             Code Playground
           </h1>
           
           {/* File operations */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={createFile}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors text-white"
               title="New File"
             >
-              <span>+ New</span>
+              + New
             </button>
             
             <button
               onClick={handleImport}
-              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white"
               title="Import Project"
             >
               📥 Import
@@ -404,7 +357,7 @@ console.log('JavaScript loaded and ready!');`,
             
             <button
               onClick={handleExport}
-              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
+              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white"
               title="Export Project"
             >
               📤 Export
@@ -413,41 +366,43 @@ console.log('JavaScript loaded and ready!');`,
         </div>
 
         {/* Toolbar controls */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-3">
           {/* Theme selector */}
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            className="bg-gray-700 px-2 py-1 rounded text-sm"
+            className="bg-gray-700 text-white px-2 py-1.5 rounded text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
           >
             <option value="vs-dark">Dark</option>
             <option value="vs">Light</option>
-            <option value="vscode-dark-plus">VS Code Dark+</option>
-            <option value="atom-one-dark">Atom One Dark</option>
+            <option value="dracula">Dracula</option>
+            <option value="monokai">Monokai</option>
           </select>
 
           {/* Font size */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-1 bg-gray-700 rounded px-2 py-1">
             <button
               onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-              className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+              className="text-gray-300 hover:text-white text-sm transition-colors px-1"
             >
               A-
             </button>
-            <span className="text-sm">{fontSize}px</span>
+            <span className="text-sm text-gray-400 px-2">{fontSize}px</span>
             <button
               onClick={() => setFontSize(Math.min(24, fontSize + 1))}
-              className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+              className="text-gray-300 hover:text-white text-sm transition-colors px-1"
             >
               A+
             </button>
           </div>
 
           {/* View toggles */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-              className={`px-2 py-1 rounded text-sm ${isSidebarVisible ? 'bg-blue-600' : 'bg-gray-700'}`}
+              className={`px-2 py-1.5 rounded text-sm transition-colors ${
+                isSidebarVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
+              }`}
               title="Toggle Sidebar"
             >
               📁
@@ -455,7 +410,9 @@ console.log('JavaScript loaded and ready!');`,
             
             <button
               onClick={() => setIsPreviewVisible(!isPreviewVisible)}
-              className={`px-2 py-1 rounded text-sm ${isPreviewVisible ? 'bg-blue-600' : 'bg-gray-700'}`}
+              className={`px-2 py-1.5 rounded text-sm transition-colors ${
+                isPreviewVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
+              }`}
               title="Toggle Preview"
             >
               👁️
@@ -463,7 +420,9 @@ console.log('JavaScript loaded and ready!');`,
             
             <button
               onClick={() => setIsConsoleVisible(!isConsoleVisible)}
-              className={`px-2 py-1 rounded text-sm ${isConsoleVisible ? 'bg-blue-600' : 'bg-gray-700'}`}
+              className={`px-2 py-1.5 rounded text-sm transition-colors ${
+                isConsoleVisible ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:text-white'
+              }`}
               title="Toggle Console"
             >
               🖥️
@@ -471,20 +430,21 @@ console.log('JavaScript loaded and ready!');`,
 
             <button
               onClick={() => setSplitView(splitView === 'horizontal' ? 'vertical' : 'horizontal')}
-              className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+              className="px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm text-gray-300 hover:text-white transition-colors"
               title="Toggle Split Direction"
             >
               {splitView === 'horizontal' ? '⬌' : '⬍'}
             </button>
-
-            <button
-              onClick={toggleFullscreen}
-              className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-              title="Fullscreen"
-            >
-              {isFullscreen ? '🗗' : '🗖'}
-            </button>
           </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={refreshPreview}
+            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors text-white font-medium"
+            title="Refresh Preview"
+          >
+            🔄 Refresh
+          </button>
         </div>
       </div>
 
@@ -501,16 +461,20 @@ console.log('JavaScript loaded and ready!');`,
                   {Object.keys(files).map(filename => (
                     <div
                       key={filename}
-                      className={`group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-700 ${
+                      className={`group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer hover:bg-gray-700 ${
                         activeFile === filename ? 'bg-gray-700' : ''
                       }`}
                       onClick={() => setActiveFile(filename)}
                     >
-                      <div className="flex items-center space-x-2">
-                        <span>{getFileIcon(filename)}</span>
-                        <span className="text-sm">{filename}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{
+                          filename.endsWith('.html') ? '📄' :
+                          filename.endsWith('.css') ? '🎨' :
+                          filename.endsWith('.js') ? '📜' : '📃'
+                        }</span>
+                        <span className="text-sm text-gray-200">{filename}</span>
                       </div>
-                      <div className="hidden group-hover:flex items-center space-x-1">
+                      <div className="hidden group-hover:flex items-center gap-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -540,11 +504,11 @@ console.log('JavaScript loaded and ready!');`,
               {/* Libraries Section */}
               <div className="p-4 border-t border-gray-700">
                 <h3 className="text-sm font-semibold text-gray-400 uppercase mb-2">Libraries</h3>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-64 overflow-y-auto">
                   {availableLibraries.map(lib => (
                     <label
                       key={lib.id}
-                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-700 px-2 py-1 rounded"
+                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-700 px-2 py-1 rounded"
                     >
                       <input
                         type="checkbox"
@@ -556,10 +520,10 @@ console.log('JavaScript loaded and ready!');`,
                             setSelectedLibraries(selectedLibraries.filter(id => id !== lib.id));
                           }
                         }}
-                        className="rounded"
+                        className="rounded text-blue-600"
                       />
-                      <span>{lib.icon}</span>
-                      <span className="text-sm">{lib.name}</span>
+                      <span className="text-base">{lib.icon}</span>
+                      <span className="text-sm text-gray-200">{lib.name}</span>
                     </label>
                   ))}
                 </div>
@@ -573,8 +537,7 @@ console.log('JavaScript loaded and ready!');`,
                     Object.keys(codeSnippets[files[activeFile].language]).slice(0, 5).map(key => (
                       <button
                         key={key}
-                        onClick={() => insertSnippet(key)}
-                        className="w-full text-left px-2 py-1 text-sm hover:bg-gray-700 rounded"
+                        className="w-full text-left px-2 py-1 text-sm text-gray-300 hover:bg-gray-700 rounded"
                       >
                         {key}
                       </button>
@@ -587,9 +550,9 @@ console.log('JavaScript loaded and ready!');`,
         )}
 
         {/* Editor and Preview Container */}
-        <div className={`flex-1 flex ${splitView === 'horizontal' ? 'flex-row' : 'flex-col'}`}>
-          {/* Editor */}
-          <div className={`${isPreviewVisible ? (splitView === 'horizontal' ? 'w-1/2' : 'h-1/2') : 'flex-1'} flex flex-col`}>
+        <div className={`flex-1 flex ${splitView === 'horizontal' ? 'flex-row' : 'flex-col'} overflow-hidden`}>
+          {/* Editor Section */}
+          <div className={`${isPreviewVisible ? (splitView === 'horizontal' ? 'w-1/2' : 'h-1/2') : 'flex-1'} flex flex-col bg-gray-900`}>
             <EnhancedMonacoEditor
               file={files[activeFile]}
               filename={activeFile}
@@ -603,42 +566,31 @@ console.log('JavaScript loaded and ready!');`,
 
           {/* Preview and Console */}
           {isPreviewVisible && (
-            <div className={`${splitView === 'horizontal' ? 'w-1/2' : 'h-1/2'} flex flex-col bg-white`}>
+            <div className={`${splitView === 'horizontal' ? 'w-1/2' : 'h-1/2'} flex flex-col bg-white border-l border-gray-700`}>
               {/* Preview */}
-              <div className={`${isConsoleVisible ? 'flex-1' : 'h-full'} relative`}>
-                <div className="absolute top-2 right-2 z-10 flex items-center space-x-2">
-                  <button
-                    onClick={() => {
-                      if (iframeRef.current) {
-                        iframeRef.current.contentWindow.location.reload();
-                      }
-                    }}
-                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
-                  >
-                    🔄 Refresh
-                  </button>
-                </div>
+              <div className={`${isConsoleVisible ? 'flex-1' : 'h-full'} relative bg-white`}>
                 <iframe
                   ref={iframeRef}
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 bg-white"
                   title="Preview"
                   sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
+                  style={{ backgroundColor: 'white' }}
                 />
               </div>
 
               {/* Console */}
               {isConsoleVisible && (
                 <div className="h-48 bg-gray-900 border-t border-gray-700 flex flex-col">
-                  <div className="px-4 py-2 bg-gray-800 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Console</span>
+                  <div className="px-4 py-2 bg-gray-800 flex items-center justify-between flex-shrink-0">
+                    <span className="text-sm font-semibold text-gray-200">Console</span>
                     <button
                       onClick={clearConsole}
-                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs"
+                      className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-200"
                     >
                       Clear
                     </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+                  <div className="flex-1 overflow-y-auto p-3 font-mono text-sm">
                     {consoleOutput.length === 0 ? (
                       <div className="text-gray-500">Console output will appear here...</div>
                     ) : (
@@ -659,17 +611,17 @@ console.log('JavaScript loaded and ready!');`,
       </div>
 
       {/* Status Bar */}
-      <div className="bg-gray-800 border-t border-gray-700 px-4 py-1 flex items-center justify-between text-xs text-gray-400">
-        <div className="flex items-center space-x-4">
+      <div className="bg-gray-800 border-t border-gray-700 px-4 py-1 flex items-center justify-between text-xs text-gray-400 flex-shrink-0">
+        <div className="flex items-center gap-4">
           <span>Files: {Object.keys(files).length}</span>
           <span>•</span>
           <span>Libraries: {selectedLibraries.length}</span>
           <span>•</span>
           <span>Theme: {theme}</span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <span className="text-green-400">
-            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
             Ready
           </span>
         </div>
