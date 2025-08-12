@@ -1,207 +1,477 @@
 // src/front/components/playground/FileExplorer.jsx
-import React, { useState } from 'react';
-import { getFileIcon, getLanguageFromExtension } from './utils/fileUtils';
+import React, { useState, useRef, useEffect } from 'react';
 
-const FileExplorer = ({ files, activeFile, dispatch }) => {
-  const [showNewFileInput, setShowNewFileInput] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [renamingFile, setRenamingFile] = useState(null);
-  const [renameValue, setRenameValue] = useState('');
+const FileExplorer = ({ 
+  fileTree, 
+  activeFile, 
+  onFileSelect, 
+  onFileCreate, 
+  onFileDelete, 
+  onFileRename,
+  onFolderCreate,
+  onFolderDelete,
+  theme = 'dark'
+}) => {
+  const [expandedFolders, setExpandedFolders] = useState(new Set(['root']));
   const [contextMenu, setContextMenu] = useState(null);
+  const [renaming, setRenaming] = useState(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [creatingIn, setCreatingIn] = useState(null);
+  const [creatingType, setCreatingType] = useState(null);
 
-  const handleCreateFile = () => {
-    if (newFileName.trim()) {
-      const language = getLanguageFromExtension(newFileName);
-      dispatch({
-        type: 'CREATE_FILE',
-        payload: {
-          filename: newFileName.trim(),
-          content: '',
-          language
-        }
-      });
-      setNewFileName('');
-      setShowNewFileInput(false);
+  const contextMenuRef = useRef(null);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleFolder = (path) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path);
+    } else {
+      newExpanded.add(path);
     }
+    setExpandedFolders(newExpanded);
   };
 
-  const handleRename = (oldName) => {
-    if (renameValue.trim() && renameValue !== oldName) {
-      dispatch({
-        type: 'RENAME_FILE',
-        payload: { oldName, newName: renameValue.trim() }
-      });
-    }
-    setRenamingFile(null);
-    setRenameValue('');
-  };
-
-  const handleDelete = (filename) => {
-    if (window.confirm(`Delete ${filename}?`)) {
-      dispatch({ type: 'DELETE_FILE', payload: filename });
-    }
-    setContextMenu(null);
-  };
-
-  const handleContextMenu = (e, filename) => {
+  const handleContextMenu = (e, item, path) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
-      filename
+      item,
+      path
     });
   };
 
-  const handleFileClick = (filename) => {
-    dispatch({ type: 'SET_ACTIVE_FILE', payload: filename });
+  const handleCreateNew = (type, parentPath) => {
+    setCreatingIn(parentPath);
+    setCreatingType(type);
+    setNewItemName('');
+    setContextMenu(null);
+    
+    // Expand parent folder if creating inside it
+    if (parentPath) {
+      const newExpanded = new Set(expandedFolders);
+      newExpanded.add(parentPath);
+      setExpandedFolders(newExpanded);
+    }
   };
 
-  // Close context menu when clicking outside
-  React.useEffect(() => {
-    const handleClick = () => setContextMenu(null);
-    if (contextMenu) {
-      document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
+  const confirmCreate = () => {
+    if (newItemName.trim()) {
+      const fullPath = creatingIn ? `${creatingIn}/${newItemName}` : newItemName;
+      
+      if (creatingType === 'file') {
+        onFileCreate(fullPath);
+      } else {
+        onFolderCreate(fullPath);
+      }
+      
+      setCreatingIn(null);
+      setCreatingType(null);
+      setNewItemName('');
     }
-  }, [contextMenu]);
+  };
+
+  const handleRename = (path, newName) => {
+    if (newName.trim() && newName !== path.split('/').pop()) {
+      const pathParts = path.split('/');
+      pathParts[pathParts.length - 1] = newName;
+      const newPath = pathParts.join('/');
+      onFileRename(path, newPath);
+    }
+    setRenaming(null);
+  };
+
+  const getFileIcon = (name, isFolder) => {
+    if (isFolder) return '📁';
+    
+    const ext = name.split('.').pop().toLowerCase();
+    const icons = {
+      html: '📄',
+      css: '🎨',
+      js: '📜',
+      jsx: '⚛️',
+      ts: '📘',
+      tsx: '⚛️',
+      json: '📊',
+      md: '📝',
+      txt: '📃',
+      png: '🖼️',
+      jpg: '🖼️',
+      svg: '🎭',
+      git: '🔧',
+      env: '⚙️'
+    };
+    
+    return icons[ext] || '📄';
+  };
+
+  const renderTree = (tree, parentPath = '') => {
+    return Object.entries(tree).map(([name, content]) => {
+      const currentPath = parentPath ? `${parentPath}/${name}` : name;
+      const isFolder = typeof content === 'object' && !content.content;
+      const isExpanded = expandedFolders.has(currentPath);
+      const isActive = activeFile === currentPath;
+      const isRenaming = renaming === currentPath;
+
+      return (
+        <div key={currentPath}>
+          {/* File/Folder Item */}
+          <div
+            className={`file-item ${isActive ? 'active' : ''}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              paddingLeft: `${(parentPath.split('/').filter(Boolean).length * 16) + 8}px`,
+              cursor: 'pointer',
+              backgroundColor: isActive ? (theme === 'dark' ? '#2d3748' : '#e2e8f0') : 'transparent',
+              color: theme === 'dark' ? '#e2e8f0' : '#2d3748'
+            }}
+            onClick={() => {
+              if (isFolder) {
+                toggleFolder(currentPath);
+              } else {
+                onFileSelect(currentPath);
+              }
+            }}
+            onContextMenu={(e) => handleContextMenu(e, { name, isFolder }, currentPath)}
+            onMouseEnter={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
+            {/* Expand/Collapse Arrow for Folders */}
+            {isFolder && (
+              <span 
+                style={{ 
+                  marginRight: '4px',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
+                  fontSize: '12px',
+                  color: theme === 'dark' ? '#9ca3af' : '#6b7280'
+                }}
+              >
+                ▶
+              </span>
+            )}
+            
+            {/* Icon */}
+            <span style={{ marginRight: '6px', fontSize: '16px' }}>
+              {getFileIcon(name, isFolder)}
+            </span>
+            
+            {/* Name */}
+            {isRenaming ? (
+              <input
+                type="text"
+                defaultValue={name}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRename(currentPath, e.target.value);
+                  } else if (e.key === 'Escape') {
+                    setRenaming(null);
+                  }
+                }}
+                onBlur={(e) => handleRename(currentPath, e.target.value)}
+                style={{
+                  backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                  color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#4b5563' : '#cbd5e0',
+                  borderRadius: '2px',
+                  padding: '0 4px',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            ) : (
+              <span style={{ fontSize: '14px', flex: 1 }}>{name}</span>
+            )}
+          </div>
+
+          {/* Creating new item input */}
+          {creatingIn === currentPath && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                paddingLeft: `${((currentPath.split('/').filter(Boolean).length + 1) * 16) + 8}px`,
+              }}
+            >
+              <span style={{ marginRight: '6px', fontSize: '16px' }}>
+                {creatingType === 'folder' ? '📁' : '📄'}
+              </span>
+              <input
+                type="text"
+                placeholder={`New ${creatingType} name...`}
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmCreate();
+                  } else if (e.key === 'Escape') {
+                    setCreatingIn(null);
+                    setCreatingType(null);
+                  }
+                }}
+                onBlur={confirmCreate}
+                autoFocus
+                style={{
+                  backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                  color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#4b5563' : '#cbd5e0',
+                  borderRadius: '2px',
+                  padding: '2px 4px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  width: '100%'
+                }}
+              />
+            </div>
+          )}
+
+          {/* Render children if folder is expanded */}
+          {isFolder && isExpanded && content && (
+            <div>
+              {renderTree(content, currentPath)}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
 
   return (
-    <div className="h-full bg-gray-800 flex flex-col">
+    <div style={{ 
+      height: '100%', 
+      backgroundColor: theme === 'dark' ? '#374151' : '#f9fafb',
+      color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+      overflow: 'auto'
+    }}>
       {/* Header */}
-      <div className="p-3 border-b border-gray-700 flex items-center justify-between bg-gray-800">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          Explorer
+      <div style={{
+        padding: '12px',
+        borderBottom: '1px solid',
+        borderColor: theme === 'dark' ? '#4b5563' : '#e5e7eb',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <span style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
+          EXPLORER
         </span>
-        <button
-          onClick={() => setShowNewFileInput(true)}
-          className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors"
-          title="New File"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-              d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => handleCreateNew('file', '')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+              cursor: 'pointer',
+              fontSize: '16px',
+              padding: '2px'
+            }}
+            title="New File"
+          >
+            📄+
+          </button>
+          <button
+            onClick={() => handleCreateNew('folder', '')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+              cursor: 'pointer',
+              fontSize: '16px',
+              padding: '2px'
+            }}
+            title="New Folder"
+          >
+            📁+
+          </button>
+        </div>
       </div>
 
-      {/* File List */}
-      <div className="flex-1 overflow-y-auto">
-        {/* New File Input */}
-        {showNewFileInput && (
-          <div className="p-3 border-b border-gray-700 bg-gray-750">
+      {/* File Tree */}
+      <div style={{ padding: '8px 0' }}>
+        {renderTree(fileTree)}
+        
+        {/* Creating new item at root */}
+        {creatingIn === '' && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              paddingLeft: '8px',
+            }}
+          >
+            <span style={{ marginRight: '6px', fontSize: '16px' }}>
+              {creatingType === 'folder' ? '📁' : '📄'}
+            </span>
             <input
               type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
+              placeholder={`New ${creatingType} name...`}
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateFile();
-                if (e.key === 'Escape') {
-                  setShowNewFileInput(false);
-                  setNewFileName('');
+                if (e.key === 'Enter') {
+                  confirmCreate();
+                } else if (e.key === 'Escape') {
+                  setCreatingIn(null);
+                  setCreatingType(null);
                 }
               }}
-              onBlur={() => {
-                if (!newFileName.trim()) {
-                  setShowNewFileInput(false);
-                }
-              }}
-              placeholder="filename.js"
-              className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              onBlur={confirmCreate}
               autoFocus
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+                color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                border: '1px solid',
+                borderColor: theme === 'dark' ? '#4b5563' : '#cbd5e0',
+                borderRadius: '2px',
+                padding: '2px 4px',
+                fontSize: '14px',
+                outline: 'none',
+                width: '100%'
+              }}
             />
-          </div>
-        )}
-
-        {/* Files */}
-        <div className="py-1">
-          {Object.keys(files).sort().map(filename => (
-            <div key={filename}>
-              {renamingFile === filename ? (
-                <div className="px-3 py-1">
-                  <input
-                    type="text"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleRename(filename);
-                      if (e.key === 'Escape') {
-                        setRenamingFile(null);
-                        setRenameValue('');
-                      }
-                    }}
-                    onBlur={() => handleRename(filename)}
-                    className="w-full px-2 py-1 text-sm bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-                    autoFocus
-                  />
-                </div>
-              ) : (
-                <button
-                  className={`w-full flex items-center px-3 py-2 hover:bg-gray-700 cursor-pointer transition-colors text-left ${
-                    activeFile === filename 
-                      ? 'bg-gray-700 border-l-2 border-blue-500 text-white' 
-                      : 'text-gray-300 hover:text-white'
-                  }`}
-                  onClick={() => handleFileClick(filename)}
-                  onContextMenu={(e) => handleContextMenu(e, filename)}
-                >
-                  <span className="mr-2 text-base flex-shrink-0">{getFileIcon(filename)}</span>
-                  <span className="text-sm truncate flex-1">{filename}</span>
-                  {files[filename].modifiedAt && activeFile === filename && (
-                    <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></span>
-                  )}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {Object.keys(files).length === 0 && (
-          <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
-            <div className="text-3xl mb-3">📁</div>
-            <p className="text-sm mb-3">No files yet</p>
-            <button
-              onClick={() => setShowNewFileInput(true)}
-              className="text-xs text-blue-400 hover:text-blue-300 underline"
-            >
-              Create your first file
-            </button>
           </div>
         )}
       </div>
 
       {/* Context Menu */}
       {contextMenu && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setContextMenu(null)}
-          ></div>
+        <div
+          ref={contextMenuRef}
+          style={{
+            position: 'fixed',
+            left: contextMenu.x,
+            top: contextMenu.y,
+            backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
+            border: '1px solid',
+            borderColor: theme === 'dark' ? '#4b5563' : '#cbd5e0',
+            borderRadius: '4px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            minWidth: '150px'
+          }}
+        >
+          {contextMenu.item.isFolder ? (
+            <>
+              <button
+                onClick={() => handleCreateNew('file', contextMenu.path)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  background: 'none',
+                  border: 'none',
+                  color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                📄 New File
+              </button>
+              <button
+                onClick={() => handleCreateNew('folder', contextMenu.path)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  background: 'none',
+                  border: 'none',
+                  color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                📁 New Folder
+              </button>
+              <div style={{ height: '1px', backgroundColor: theme === 'dark' ? '#4b5563' : '#e5e7eb', margin: '4px 0' }} />
+            </>
+          ) : null}
           
-          {/* Menu */}
-          <div
-            className="fixed bg-gray-700 rounded-md shadow-lg py-1 z-50 border border-gray-600 min-w-[120px]"
-            style={{ left: contextMenu.x, top: contextMenu.y }}
+          <button
+            onClick={() => {
+              setRenaming(contextMenu.path);
+              setContextMenu(null);
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '8px 12px',
+              textAlign: 'left',
+              background: 'none',
+              border: 'none',
+              color: theme === 'dark' ? '#e2e8f0' : '#2d3748',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
           >
-            <button
-              onClick={() => {
-                setRenamingFile(contextMenu.filename);
-                setRenameValue(contextMenu.filename);
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors"
-            >
-              Rename
-            </button>
-            <button
-              onClick={() => handleDelete(contextMenu.filename)}
-              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </>
+            ✏️ Rename
+          </button>
+          
+          <button
+            onClick={() => {
+              if (confirm(`Delete ${contextMenu.item.name}?`)) {
+                if (contextMenu.item.isFolder) {
+                  onFolderDelete(contextMenu.path);
+                } else {
+                  onFileDelete(contextMenu.path);
+                }
+              }
+              setContextMenu(null);
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '8px 12px',
+              textAlign: 'left',
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          >
+            🗑️ Delete
+          </button>
+        </div>
       )}
     </div>
   );
