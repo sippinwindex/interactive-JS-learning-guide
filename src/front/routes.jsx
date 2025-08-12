@@ -84,18 +84,21 @@ const SimpleRouter = () => {
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       
       // Determine initial theme
       const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
       
       setIsDarkMode(shouldBeDark);
       
-      // Apply theme to document
+      // Apply theme to document immediately
+      const htmlElement = document.documentElement;
       if (shouldBeDark) {
-        document.documentElement.classList.add('dark');
+        htmlElement.classList.add('dark');
+        htmlElement.style.colorScheme = 'dark';
       } else {
-        document.documentElement.classList.remove('dark');
+        htmlElement.classList.remove('dark');
+        htmlElement.style.colorScheme = 'light';
       }
     } catch (error) {
       console.warn('Failed to initialize theme:', error);
@@ -111,11 +114,14 @@ const SimpleRouter = () => {
       const newDarkMode = !isDarkMode;
       setIsDarkMode(newDarkMode);
       
+      const htmlElement = document.documentElement;
       if (newDarkMode) {
-        document.documentElement.classList.add('dark');
+        htmlElement.classList.add('dark');
+        htmlElement.style.colorScheme = 'dark';
         localStorage.setItem('theme', 'dark');
       } else {
-        document.documentElement.classList.remove('dark');
+        htmlElement.classList.remove('dark');
+        htmlElement.style.colorScheme = 'light';
         localStorage.setItem('theme', 'light');
       }
     } catch (error) {

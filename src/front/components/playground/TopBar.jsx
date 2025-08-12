@@ -22,29 +22,33 @@ const TopBar = ({
   const [showExamples, setShowExamples] = useState(false);
 
   const handleDownload = () => {
-    const htmlFile = files['index.html'] || Object.values(files).find(f => f.language === 'html');
-    const cssFiles = Object.entries(files).filter(([name]) => name.endsWith('.css'));
-    const jsFiles = Object.entries(files).filter(([name]) => name.endsWith('.js'));
+    try {
+      const htmlFile = files['index.html'] || Object.values(files).find(f => f.language === 'html');
+      const cssFiles = Object.entries(files).filter(([name]) => name.endsWith('.css'));
+      const jsFiles = Object.entries(files).filter(([name]) => name.endsWith('.js'));
 
-    let combinedHTML = htmlFile?.content || '<h1>No HTML file found</h1>';
-    
-    if (cssFiles.length > 0) {
-      const css = cssFiles.map(([, file]) => file.content).join('\n');
-      combinedHTML = combinedHTML.replace('</head>', `<style>${css}</style>\n</head>`);
-    }
-    
-    if (jsFiles.length > 0) {
-      const js = jsFiles.map(([, file]) => file.content).join('\n');
-      combinedHTML = combinedHTML.replace('</body>', `<script>${js}</script>\n</body>`);
-    }
+      let combinedHTML = htmlFile?.content || '<h1>No HTML file found</h1>';
+      
+      if (cssFiles.length > 0) {
+        const css = cssFiles.map(([, file]) => file.content).join('\n');
+        combinedHTML = combinedHTML.replace('</head>', `<style>${css}</style>\n</head>`);
+      }
+      
+      if (jsFiles.length > 0) {
+        const js = jsFiles.map(([, file]) => file.content).join('\n');
+        combinedHTML = combinedHTML.replace('</body>', `<script>${js}</script>\n</body>`);
+      }
 
-    const blob = new Blob([combinedHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'project.html';
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([combinedHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'project.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   };
 
   const handleLoadExample = (example) => {
@@ -57,6 +61,30 @@ const TopBar = ({
   const handleClearAll = () => {
     if (window.confirm('Clear all files? This cannot be undone.')) {
       dispatch({ type: 'LOAD_TEMPLATE', payload: { files: {} } });
+    }
+  };
+
+  const handleNewFile = () => {
+    const fileName = prompt('Enter file name (e.g., app.js, style.css):');
+    if (fileName && fileName.trim()) {
+      const extension = fileName.split('.').pop().toLowerCase();
+      const languageMap = {
+        'js': 'javascript',
+        'html': 'html',
+        'css': 'css',
+        'json': 'json',
+        'md': 'markdown',
+        'txt': 'plaintext'
+      };
+      
+      dispatch({
+        type: 'CREATE_FILE',
+        payload: {
+          filename: fileName.trim(),
+          content: '',
+          language: languageMap[extension] || 'plaintext'
+        }
+      });
     }
   };
 
@@ -113,6 +141,16 @@ const TopBar = ({
           )}
         </button>
 
+        {/* New File Button */}
+        <button
+          onClick={handleNewFile}
+          className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+          title="Create New File"
+        >
+          <span className="hidden sm:inline">➕ New File</span>
+          <span className="sm:hidden">➕</span>
+        </button>
+
         {/* Examples Dropdown */}
         <div className="relative">
           <button
@@ -149,19 +187,6 @@ const TopBar = ({
             </>
           )}
         </div>
-
-        {/* Template Button */}
-        <button
-          onClick={() => {
-            if (window.confirm('Load HTML template?')) {
-              dispatch({ type: 'LOAD_TEMPLATE', payload: { files: templateProjects.html || {} } });
-            }
-          }}
-          className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-        >
-          <span className="hidden sm:inline">📄 Template</span>
-          <span className="sm:hidden">📄</span>
-        </button>
 
         {/* Clear Button */}
         <button
@@ -232,22 +257,6 @@ const TopBar = ({
         >
           Console
         </button>
-
-        {/* Theme Selector */}
-        <select
-          value={editorTheme}
-          onChange={(e) => setEditorTheme(e.target.value)}
-          className="bg-gray-700 text-white text-sm px-2 py-1 rounded-md border border-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
-        >
-          <optgroup label="Dark">
-            <option value="dracula">Dracula</option>
-            <option value="monokai">Monokai</option>
-            <option value="vs-dark">VS Dark</option>
-          </optgroup>
-          <optgroup label="Light">
-            <option value="vs">VS Light</option>
-          </optgroup>
-        </select>
 
         {/* Download Button */}
         <button
