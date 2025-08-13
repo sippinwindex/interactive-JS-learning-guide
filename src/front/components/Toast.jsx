@@ -1,6 +1,6 @@
 // src/front/components/ui/Toast.jsx
 import React, { useState, useEffect } from 'react';
-import { XIcon, InfoIcon, ExclamationTriangleIcon, CheckCircleIcon } from './Icons';
+import { XIcon, InfoIcon, ExclamationTriangleIcon, CheckCircleIcon } from './ui/Icons';
 
 export const Toast = ({ 
   show, 
