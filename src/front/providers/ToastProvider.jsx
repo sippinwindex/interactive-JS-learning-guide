@@ -1,6 +1,6 @@
 // src/front/providers/ToastProvider.jsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import Toast from "../components/Toast";
+import Toast from "../components/ui/Toast";
 
 const ToastContext = createContext();
 
