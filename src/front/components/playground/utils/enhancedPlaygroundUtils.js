@@ -1,635 +1,869 @@
-// src/front/components/playground/utils/enhancedPlaygroundUtils.js
+// src/front/components/playground/EnhancedPlayground.jsx
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import EnhancedMonacoEditor from './EnhancedMonacoEditor';
+import FileExplorer from './FileExplorer';
+import { defineEditorThemes } from './themes/editorThemes';
+import { 
+  enhancedRunCode, 
+  createAutoSave, 
+  storage, 
+  exportProject, 
+  importProject,
+  getFileLanguage,
+  codeSnippets 
+} from './utils/enhancedPlaygroundUtils';
 
-// Enhanced file utilities with more language support
-export const getFileLanguage = (filename) => {
-  const ext = filename.split('.').pop().toLowerCase();
-  const languageMap = {
-    // Web
-    'html': 'html',
-    'htm': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'sass': 'sass',
-    'less': 'less',
-    
-    // JavaScript/TypeScript
-    'js': 'javascript',
-    'jsx': 'javascript',
-    'ts': 'typescript',
-    'tsx': 'typescript',
-    'mjs': 'javascript',
-    'cjs': 'javascript',
-    
-    // Frameworks
-    'vue': 'vue',
-    'svelte': 'svelte',
-    
-    // Data
-    'json': 'json',
-    'xml': 'xml',
-    'yaml': 'yaml',
-    'yml': 'yaml',
-    'toml': 'toml',
-    'ini': 'ini',
-    
-    // Languages
-    'py': 'python',
-    'java': 'java',
-    'c': 'c',
-    'cpp': 'cpp',
-    'cs': 'csharp',
-    'php': 'php',
-    'rb': 'ruby',
-    'go': 'go',
-    'rs': 'rust',
-    'swift': 'swift',
-    'kt': 'kotlin',
-    'scala': 'scala',
-    'r': 'r',
-    'lua': 'lua',
-    'dart': 'dart',
-    
-    // Shell
-    'sh': 'shell',
-    'bash': 'shell',
-    'zsh': 'shell',
-    'fish': 'shell',
-    'ps1': 'powershell',
-    'bat': 'bat',
-    
-    // Database
-    'sql': 'sql',
-    'mysql': 'mysql',
-    'pgsql': 'pgsql',
-    'sqlite': 'sql',
-    
-    // Documentation
-    'md': 'markdown',
-    'mdx': 'markdown',
-    'txt': 'plaintext',
-    'rst': 'restructuredtext',
-    
-    // Config
-    'dockerfile': 'dockerfile',
-    'nginx': 'nginx',
-    'conf': 'conf',
-    'env': 'dotenv',
-    
-    // Default
-    'default': 'plaintext'
-  };
-  
-  return languageMap[ext] || languageMap.default;
-};
+// Import the brand icon for consistent branding
+import { BrandIcon } from '../ui/Icons';
 
-// Enhanced code runner with better error handling and console capture
-export const enhancedRunCode = (files, iframe, options = {}) => {
-  const {
-    enableConsoleCapture = true,
-    enableErrorHandling = true,
-    enablePerformanceMonitoring = false,
-    libraries = [],
-    preprocessors = {}
-  } = options;
-
-  try {
-    // Get main files
-    const htmlFile = files['index.html'] || 
-                     Object.entries(files).find(([name]) => name.endsWith('.html'))?.[1];
-    
-    if (!htmlFile) {
-      return { error: 'No HTML file found' };
-    }
-
-    // Process CSS files with preprocessors if needed
-    const cssFiles = Object.entries(files).filter(([name]) => 
-      name.endsWith('.css') || name.endsWith('.scss') || name.endsWith('.less')
-    );
-    
-    const processedCSS = cssFiles.map(([name, file]) => {
-      const ext = name.split('.').pop();
-      if (preprocessors[ext]) {
-        return preprocessors[ext](file.content);
-      }
-      return `/* ${name} */\n${file.content}`;
-    }).join('\n\n');
-
-    // Process JavaScript files
-    const jsFiles = Object.entries(files).filter(([name]) => 
-      name.endsWith('.js') || name.endsWith('.jsx') || name.endsWith('.ts') || name.endsWith('.tsx')
-    );
-    
-    const processedJS = jsFiles.map(([name, file]) => {
-      const ext = name.split('.').pop();
-      if (preprocessors[ext]) {
-        return preprocessors[ext](file.content);
-      }
-      return `// ${name}\n${file.content}`;
-    }).join('\n\n');
-
-    // Build enhanced HTML with all features
-    const enhancedHTML = buildEnhancedHTML(
-      htmlFile.content,
-      processedCSS,
-      processedJS,
-      {
-        enableConsoleCapture,
-        enableErrorHandling,
-        enablePerformanceMonitoring,
-        libraries
-      }
-    );
-
-    // Set iframe content
-    iframe.srcdoc = enhancedHTML;
-    
-    return { success: true };
-  } catch (error) {
-    return { error: error.message, stack: error.stack };
-  }
-};
-
-// Build enhanced HTML with all features
-const buildEnhancedHTML = (htmlContent, css, javascript, options) => {
-  const {
-    enableConsoleCapture,
-    enableErrorHandling,
-    enablePerformanceMonitoring,
-    libraries
-  } = options;
-
-  // Parse HTML to check if it's complete or fragment
-  const isCompleteHTML = htmlContent.includes('<!DOCTYPE') || htmlContent.includes('<html');
-  
-  // Library CDN URLs
-  const libraryUrls = {
-    'react': [
-      'https://unpkg.com/react@18/umd/react.development.js',
-      'https://unpkg.com/react-dom@18/umd/react-dom.development.js'
-    ],
-    'vue': ['https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js'],
-    'jquery': ['https://code.jquery.com/jquery-3.7.1.min.js'],
-    'bootstrap': [
-      'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-      'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js'
-    ],
-    'tailwind': ['https://cdn.tailwindcss.com'],
-    'three': ['https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js'],
-    'd3': ['https://d3js.org/d3.v7.min.js'],
-    'chart': ['https://cdn.jsdelivr.net/npm/chart.js'],
-    'axios': ['https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js'],
-    'lodash': ['https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js'],
-    'moment': ['https://cdn.jsdelivr.net/npm/moment@2/moment.min.js'],
-    'gsap': ['https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js'],
-    'anime': ['https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js'],
-    'babel': ['https://unpkg.com/@babel/standalone/babel.min.js']
-  };
-
-  // Build library includes
-  let libraryIncludes = '';
-  libraries.forEach(lib => {
-    if (libraryUrls[lib]) {
-      libraryUrls[lib].forEach(url => {
-        if (url.endsWith('.css')) {
-          libraryIncludes += `<link rel="stylesheet" href="${url}">\n`;
-        } else {
-          libraryIncludes += `<script src="${url}"></script>\n`;
-        }
-      });
-    }
-  });
-
-  // Console capture script
-  const consoleScript = enableConsoleCapture ? `
-    <script>
-      (function() {
-        const originalConsole = {
-          log: console.log,
-          error: console.error,
-          warn: console.warn,
-          info: console.info,
-          debug: console.debug,
-          table: console.table,
-          clear: console.clear,
-          time: console.time,
-          timeEnd: console.timeEnd,
-          count: console.count,
-          group: console.group,
-          groupEnd: console.groupEnd,
-          assert: console.assert
-        };
-        
-        function formatValue(value) {
-          if (value === undefined) return 'undefined';
-          if (value === null) return 'null';
-          if (value instanceof Error) {
-            return value.stack || value.toString();
-          }
-          if (typeof value === 'function') {
-            return value.toString();
-          }
-          if (typeof value === 'object') {
-            try {
-              return JSON.stringify(value, null, 2);
-            } catch (e) {
-              return Object.prototype.toString.call(value);
-            }
-          }
-          return String(value);
-        }
-        
-        function sendToParent(method, args) {
-          try {
-            window.parent.postMessage({
-              type: 'console',
-              method: method,
-              args: Array.from(args).map(formatValue),
-              timestamp: new Date().toISOString(),
-              stack: new Error().stack
-            }, '*');
-          } catch (e) {
-            // Silently fail if parent communication fails
-          }
-        }
-        
-        // Override console methods
-        Object.keys(originalConsole).forEach(method => {
-          console[method] = function(...args) {
-            sendToParent(method, args);
-            return originalConsole[method].apply(console, args);
-          };
-        });
-        
-        // Performance monitoring
-        ${enablePerformanceMonitoring ? `
-        if (window.performance && window.performance.timing) {
-          window.addEventListener('load', function() {
-            const timing = performance.timing;
-            const loadTime = timing.loadEventEnd - timing.navigationStart;
-            const domReadyTime = timing.domContentLoadedEventEnd - timing.navigationStart;
-            
-            console.log('Performance Metrics:');
-            console.log('Page Load Time: ' + loadTime + 'ms');
-            console.log('DOM Ready Time: ' + domReadyTime + 'ms');
-            
-            if (performance.memory) {
-              console.log('Memory Usage:', {
-                usedJSHeapSize: (performance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
-                totalJSHeapSize: (performance.memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB'
-              });
-            }
-          });
-        }
-        ` : ''}
-      })();
-    </script>
-  ` : '';
-
-  // Error handling script
-  const errorScript = enableErrorHandling ? `
-    <script>
-      // Global error handler
-      window.addEventListener('error', function(event) {
-        console.error('Runtime Error:', {
-          message: event.message,
-          filename: event.filename,
-          line: event.lineno,
-          column: event.colno,
-          error: event.error
-        });
-        return false;
-      });
-      
-      // Unhandled promise rejection handler
-      window.addEventListener('unhandledrejection', function(event) {
-        console.error('Unhandled Promise Rejection:', {
-          reason: event.reason,
-          promise: event.promise
-        });
-        event.preventDefault();
-      });
-      
-      // Resource load error handler
-      window.addEventListener('error', function(event) {
-        if (event.target !== window) {
-          console.error('Resource Load Error:', {
-            type: event.target.tagName,
-            src: event.target.src || event.target.href,
-            message: 'Failed to load resource'
-          });
-        }
-      }, true);
-    </script>
-  ` : '';
-
-  // Build complete HTML
-  if (isCompleteHTML) {
-    // Inject into existing HTML structure
-    let modifiedHTML = htmlContent;
-    
-    // Inject libraries before closing head
-    if (libraryIncludes) {
-      const headEnd = modifiedHTML.indexOf('</head>');
-      if (headEnd > -1) {
-        modifiedHTML = modifiedHTML.slice(0, headEnd) + 
-          libraryIncludes + '\n' +
-          modifiedHTML.slice(headEnd);
-      }
-    }
-    
-    // Inject CSS
-    if (css) {
-      const headEnd = modifiedHTML.indexOf('</head>');
-      if (headEnd > -1) {
-        modifiedHTML = modifiedHTML.slice(0, headEnd) + 
-          `<style>\n${css}\n</style>\n` + 
-          modifiedHTML.slice(headEnd);
-      }
-    }
-    
-    // Inject scripts before closing body
-    const scriptsToInject = consoleScript + errorScript + 
-      (javascript ? `<script>\n${javascript}\n</script>` : '');
-    
-    const bodyEnd = modifiedHTML.indexOf('</body>');
-    if (bodyEnd > -1) {
-      modifiedHTML = modifiedHTML.slice(0, bodyEnd) + 
-        scriptsToInject + '\n' +
-        modifiedHTML.slice(bodyEnd);
-    }
-    
-    return modifiedHTML;
-  }
-  
-  // Build complete HTML from fragment
-  return `<!DOCTYPE html>
+const EnhancedPlayground = ({ navigateTo }) => {  // Add navigateTo prop
+  // File tree structure - supports folders
+  const [fileTree, setFileTree] = useState({
+    'src': {
+      'index.html': {
+        content: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Preview</title>
-  ${libraryIncludes}
-  <style>
-    /* Reset styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-    }
-    
-    /* User styles */
-    ${css}
-  </style>
-  ${consoleScript}
-  ${errorScript}
+  <title>My Project</title>
+  <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  ${htmlContent}
-  <script>
-    try {
-      ${javascript}
-    } catch (error) {
-      console.error('Execution Error:', error.message, '\\n\\nStack:', error.stack);
-    }
-  </script>
+  <div class="container">
+    <h1>Welcome to the Playground!</h1>
+    <p>Start coding and see your changes live.</p>
+    <button id="myButton">Click Me!</button>
+    <div id="output"></div>
+  </div>
+  <script src="js/app.js"></script>
 </body>
-</html>`;
-};
+</html>`,
+        language: 'html'
+      },
+      'styles': {
+        'main.css': {
+          content: `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-// Auto-save utility
-export const createAutoSave = (saveFunction, delay = 2000) => {
-  let timeoutId = null;
-  
-  return {
-    trigger: () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        saveFunction();
-        timeoutId = null;
-      }, delay);
-    },
-    
-    cancel: () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-    },
-    
-    saveNow: () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      saveFunction();
-    }
-  };
-};
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-// Local storage utilities
-export const storage = {
-  save: (key, data) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-      return true;
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error);
-      return false;
-    }
-  },
-  
-  load: (key, defaultValue = null) => {
-    try {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
-    } catch (error) {
-      console.error('Failed to load from localStorage:', error);
-      return defaultValue;
-    }
-  },
-  
-  remove: (key) => {
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch (error) {
-      console.error('Failed to remove from localStorage:', error);
-      return false;
-    }
-  },
-  
-  clear: () => {
-    try {
-      localStorage.clear();
-      return true;
-    } catch (error) {
-      console.error('Failed to clear localStorage:', error);
-      return false;
-    }
-  }
-};
+.container {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+}
 
-// Export/Import utilities
-export const exportProject = (files, projectName = 'project') => {
-  const projectData = {
-    name: projectName,
-    version: '1.0.0',
-    created: new Date().toISOString(),
-    files: files
-  };
-  
-  const blob = new Blob([JSON.stringify(projectData, null, 2)], { 
-    type: 'application/json' 
-  });
-  
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${projectName}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
+h1 {
+  color: #333;
+  margin-bottom: 1rem;
+}
 
-export const importProject = () => {
-  return new Promise((resolve, reject) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) {
-        reject(new Error('No file selected'));
-        return;
-      }
-      
-      try {
-        const text = await file.text();
-        const projectData = JSON.parse(text);
-        
-        if (!projectData.files) {
-          throw new Error('Invalid project file');
+p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+#myButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#myButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}`,
+          language: 'css'
         }
-        
-        resolve(projectData);
-      } catch (error) {
-        reject(new Error('Failed to import project: ' + error.message));
+      },
+      'js': {
+        'app.js': {
+          content: `// Main application JavaScript
+const button = document.getElementById('myButton');
+const output = document.getElementById('output');
+
+let clickCount = 0;
+
+button.addEventListener('click', function() {
+  clickCount++;
+  
+  output.style.opacity = '0';
+  
+  setTimeout(() => {
+    output.innerHTML = \`
+      <strong>Button clicked \${clickCount} time\${clickCount !== 1 ? 's' : ''}!</strong>
+      <br>
+      <small>Timestamp: \${new Date().toLocaleTimeString()}</small>
+    \`;
+    output.style.opacity = '1';
+  }, 200);
+  
+  console.log(\`Button clicked! Count: \${clickCount}\`);
+});
+
+console.log('JavaScript loaded and ready!');`,
+          language: 'javascript'
+        }
+      }
+    },
+    'README.md': {
+      content: `# My Project
+
+This is a sample project in the playground.
+
+## Features
+- Live preview
+- Multiple file support
+- Folder structure
+- Theme support`,
+      language: 'markdown'
+    }
+  });
+
+  const [activeFile, setActiveFile] = useState('src/index.html');
+  const [theme, setTheme] = useState('dracula');
+  const [fontSize, setFontSize] = useState(14);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+  const [consoleOutput, setConsoleOutput] = useState([]);
+  const [isConsoleVisible, setIsConsoleVisible] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [selectedLibraries, setSelectedLibraries] = useState([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Refs
+  const iframeRef = useRef(null);
+  const editorRef = useRef(null);
+  const containerRef = useRef(null);
+  const monacoRef = useRef(null);
+
+  // Available themes
+  const themes = [
+    { id: 'vs-dark', name: 'VS Dark' },
+    { id: 'vs', name: 'VS Light' },
+    { id: 'dracula', name: 'Dracula' },
+    { id: 'monokai', name: 'Monokai' },
+    { id: 'tokyo-night', name: 'Tokyo Night' },
+    { id: 'github-dark', name: 'GitHub Dark' },
+    { id: 'github-light', name: 'GitHub Light' },
+    { id: 'one-dark', name: 'One Dark' },
+    { id: 'nord', name: 'Nord' }
+  ];
+
+  // Available libraries
+  const availableLibraries = [
+    { id: 'react', name: 'React' },
+    { id: 'vue', name: 'Vue.js' },
+    { id: 'jquery', name: 'jQuery' },
+    { id: 'bootstrap', name: 'Bootstrap' },
+    { id: 'tailwind', name: 'Tailwind CSS' },
+    { id: 'three', name: 'Three.js' },
+    { id: 'd3', name: 'D3.js' },
+    { id: 'chart', name: 'Chart.js' }
+  ];
+
+  // Initialize Monaco themes
+  useEffect(() => {
+    if (window.monaco && !monacoRef.current) {
+      defineEditorThemes(window.monaco);
+      monacoRef.current = true;
+    }
+  }, []);
+
+  // Fullscreen handling
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  // Get file from tree by path
+  const getFileByPath = (path) => {
+    const parts = path.split('/');
+    let current = fileTree;
+    
+    for (const part of parts) {
+      if (current[part]) {
+        current = current[part];
+      } else {
+        return null;
+      }
+    }
+    
+    return current.content !== undefined ? current : null;
+  };
+
+  // Update file in tree
+  const updateFileInTree = (path, content) => {
+    const parts = path.split('/');
+    const newTree = JSON.parse(JSON.stringify(fileTree));
+    let current = newTree;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      current = current[parts[i]];
+    }
+    
+    if (current[parts[parts.length - 1]]) {
+      current[parts[parts.length - 1]].content = content;
+      setFileTree(newTree);
+    }
+  };
+
+  // Create file in tree
+  const createFileInTree = (path) => {
+    const parts = path.split('/');
+    const newTree = JSON.parse(JSON.stringify(fileTree));
+    let current = newTree;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!current[parts[i]]) {
+        current[parts[i]] = {};
+      }
+      current = current[parts[i]];
+    }
+    
+    const fileName = parts[parts.length - 1];
+    current[fileName] = {
+      content: '',
+      language: getFileLanguage(fileName)
+    };
+    
+    setFileTree(newTree);
+    setActiveFile(path);
+  };
+
+  // Create folder in tree
+  const createFolderInTree = (path) => {
+    const parts = path.split('/');
+    const newTree = JSON.parse(JSON.stringify(fileTree));
+    let current = newTree;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!current[parts[i]]) {
+        current[parts[i]] = {};
+      }
+      current = current[parts[i]];
+    }
+    
+    current[parts[parts.length - 1]] = {};
+    setFileTree(newTree);
+  };
+
+  // Delete file/folder from tree
+  const deleteFromTree = (path) => {
+    const parts = path.split('/');
+    const newTree = JSON.parse(JSON.stringify(fileTree));
+    let current = newTree;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      current = current[parts[i]];
+    }
+    
+    delete current[parts[parts.length - 1]];
+    setFileTree(newTree);
+    
+    if (activeFile === path || activeFile.startsWith(path + '/')) {
+      // Find first available file
+      const findFirstFile = (tree, prefix = '') => {
+        for (const [name, content] of Object.entries(tree)) {
+          const currentPath = prefix ? `${prefix}/${name}` : name;
+          if (content.content !== undefined) {
+            return currentPath;
+          }
+          if (typeof content === 'object') {
+            const found = findFirstFile(content, currentPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const firstFile = findFirstFile(newTree);
+      if (firstFile) setActiveFile(firstFile);
+    }
+  };
+
+  // Rename file/folder
+  const renameInTree = (oldPath, newPath) => {
+    const oldParts = oldPath.split('/');
+    const newParts = newPath.split('/');
+    const newTree = JSON.parse(JSON.stringify(fileTree));
+    
+    // Get the item to rename
+    let oldParent = newTree;
+    for (let i = 0; i < oldParts.length - 1; i++) {
+      oldParent = oldParent[oldParts[i]];
+    }
+    const item = oldParent[oldParts[oldParts.length - 1]];
+    
+    // Delete old
+    delete oldParent[oldParts[oldParts.length - 1]];
+    
+    // Add new
+    let newParent = newTree;
+    for (let i = 0; i < newParts.length - 1; i++) {
+      if (!newParent[newParts[i]]) {
+        newParent[newParts[i]] = {};
+      }
+      newParent = newParent[newParts[i]];
+    }
+    newParent[newParts[newParts.length - 1]] = item;
+    
+    setFileTree(newTree);
+    
+    if (activeFile === oldPath) {
+      setActiveFile(newPath);
+    }
+  };
+
+  // Flatten file tree for preview
+  const flattenFiles = () => {
+    const files = {};
+    
+    const flatten = (tree, prefix = '') => {
+      for (const [name, content] of Object.entries(tree)) {
+        const path = prefix ? `${prefix}/${name}` : name;
+        if (content.content !== undefined) {
+          files[path] = content;
+        } else if (typeof content === 'object') {
+          flatten(content, path);
+        }
       }
     };
     
-    input.click();
-  });
-};
+    flatten(fileTree);
+    return files;
+  };
 
-// Code formatting utilities
-export const formatCode = (code, language) => {
-  // This would integrate with Prettier or other formatters
-  // For now, basic formatting
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return formatJavaScript(code);
-    case 'html':
-      return formatHTML(code);
-    case 'css':
-      return formatCSS(code);
-    default:
-      return code;
-  }
-};
-
-const formatJavaScript = (code) => {
-  // Basic JavaScript formatting
-  return code
-    .replace(/;[\s]*\n/g, ';\n')
-    .replace(/\{[\s]*\n/g, ' {\n')
-    .replace(/\}[\s]*\n/g, '}\n')
-    .replace(/\n\s*\n\s*\n/g, '\n\n');
-};
-
-const formatHTML = (code) => {
-  // Basic HTML formatting
-  let formatted = '';
-  let indent = 0;
-  const lines = code.split('\n');
-  
-  lines.forEach(line => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('</')) {
-      indent = Math.max(0, indent - 1);
+  // Update preview
+  useEffect(() => {
+    if (iframeRef.current) {
+      const files = flattenFiles();
+      const result = enhancedRunCode(files, iframeRef.current, {
+        enableConsoleCapture: true,
+        enableErrorHandling: true,
+        libraries: selectedLibraries
+      });
+      
+      if (result.error) {
+        console.error('Preview error:', result.error);
+      }
     }
-    
-    formatted += '  '.repeat(indent) + trimmed + '\n';
-    
-    if (trimmed.startsWith('<') && !trimmed.startsWith('</') && 
-        !trimmed.includes('/>') && !trimmed.includes('</')) {
-      indent++;
+  }, [fileTree, selectedLibraries]);
+
+  // Listen for console messages
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'console') {
+        setConsoleOutput(prev => [...prev, {
+          method: event.data.method,
+          args: event.data.args,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const clearConsole = () => setConsoleOutput([]);
+
+  const refreshPreview = () => {
+    if (iframeRef.current) {
+      const files = flattenFiles();
+      enhancedRunCode(files, iframeRef.current, {
+        enableConsoleCapture: true,
+        enableErrorHandling: true,
+        libraries: selectedLibraries
+      });
+      clearConsole();
     }
-  });
-  
-  return formatted;
+  };
+
+  const currentFile = getFileByPath(activeFile);
+  const isDarkTheme = !['vs', 'github-light'].includes(theme);
+
+  return (
+    <div 
+      ref={containerRef}
+      style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        backgroundColor: isDarkTheme ? '#1f2937' : '#f9fafb', 
+        color: isDarkTheme ? 'white' : '#1f2937',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Top Toolbar */}
+      <div style={{ 
+        backgroundColor: isDarkTheme ? '#374151' : 'white',
+        borderBottom: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Updated clickable title with brand icon */}
+          <button
+            onClick={() => navigateTo && navigateTo('home')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: 'none',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'all 0.2s ease',
+              textDecoration: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#f3f4f6';
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="Go back to home page"
+          >
+            <BrandIcon style={{ width: '24px', height: '24px' }} />
+            <h1 style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              margin: 0,
+              background: 'linear-gradient(135deg, #10b981, #3b82f6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Code Playground
+            </h1>
+          </button>
+        </div>
+
+        {/* Toolbar controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Theme selector */}
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            style={{
+              backgroundColor: isDarkTheme ? '#4b5563' : '#f3f4f6',
+              color: isDarkTheme ? 'white' : '#1f2937',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              border: `1px solid ${isDarkTheme ? '#6b7280' : '#d1d5db'}`,
+              cursor: 'pointer'
+            }}
+          >
+            {themes.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+
+          {/* Font size */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            backgroundColor: isDarkTheme ? '#4b5563' : '#f3f4f6',
+            borderRadius: '4px',
+            padding: '4px 8px'
+          }}>
+            <button
+              onClick={() => setFontSize(Math.max(10, fontSize - 1))}
+              style={{
+                color: isDarkTheme ? '#d1d5db' : '#6b7280',
+                background: 'none',
+                border: 'none',
+                fontSize: '14px',
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}
+            >
+              A-
+            </button>
+            <span style={{ fontSize: '14px', color: isDarkTheme ? '#9ca3af' : '#6b7280', padding: '0 8px' }}>
+              {fontSize}px
+            </span>
+            <button
+              onClick={() => setFontSize(Math.min(24, fontSize + 1))}
+              style={{
+                color: isDarkTheme ? '#d1d5db' : '#6b7280',
+                background: 'none',
+                border: 'none',
+                fontSize: '14px',
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}
+            >
+              A+
+            </button>
+          </div>
+
+          {/* View toggles */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setIsSidebarVisible(!isSidebarVisible)}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isSidebarVisible ? '#3b82f6' : (isDarkTheme ? '#6b7280' : '#e5e7eb'),
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              title="Toggle Sidebar"
+            >
+              📁
+            </button>
+            
+            <button
+              onClick={() => setIsPreviewVisible(!isPreviewVisible)}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isPreviewVisible ? '#3b82f6' : (isDarkTheme ? '#6b7280' : '#e5e7eb'),
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              title="Toggle Preview"
+            >
+              👁️
+            </button>
+            
+            <button
+              onClick={() => setIsConsoleVisible(!isConsoleVisible)}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isConsoleVisible ? '#3b82f6' : (isDarkTheme ? '#6b7280' : '#e5e7eb'),
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              title="Toggle Console"
+            >
+              🖥️
+            </button>
+
+            <button
+              onClick={toggleFullscreen}
+              style={{
+                padding: '6px 8px',
+                backgroundColor: isDarkTheme ? '#6b7280' : '#e5e7eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            >
+              {isFullscreen ? '🗗' : '⛶'}
+            </button>
+          </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={refreshPreview}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Sidebar with File Explorer */}
+        {isSidebarVisible && (
+          <div style={{ 
+            width: '256px',
+            backgroundColor: isDarkTheme ? '#374151' : '#f9fafb',
+            borderRight: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <FileExplorer
+              fileTree={fileTree}
+              activeFile={activeFile}
+              onFileSelect={setActiveFile}
+              onFileCreate={createFileInTree}
+              onFileDelete={deleteFromTree}
+              onFileRename={renameInTree}
+              onFolderCreate={createFolderInTree}
+              onFolderDelete={deleteFromTree}
+              theme={isDarkTheme ? 'dark' : 'light'}
+            />
+
+            {/* Libraries Section */}
+            <div style={{ 
+              padding: '16px',
+              borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`
+            }}>
+              <h3 style={{ 
+                fontSize: '12px',
+                fontWeight: '600',
+                color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                LIBRARIES
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                {availableLibraries.map(lib => (
+                  <label
+                    key={lib.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      borderRadius: '4px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkTheme ? '#3f4451' : '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedLibraries.includes(lib.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLibraries([...selectedLibraries, lib.id]);
+                        } else {
+                          setSelectedLibraries(selectedLibraries.filter(id => id !== lib.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '14px', color: isDarkTheme ? '#e5e7eb' : '#374151' }}>
+                      {lib.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Editor and Preview Container */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* Editor Section */}
+          <div style={{ 
+            width: isPreviewVisible ? '50%' : '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: isDarkTheme ? '#1f2937' : 'white'
+          }}>
+            {currentFile ? (
+              <EnhancedMonacoEditor
+                file={currentFile}
+                filename={activeFile}
+                fontSize={fontSize}
+                theme={theme}
+                onChange={(value) => updateFileInTree(activeFile, value)}
+                editorRef={editorRef}
+              />
+            ) : (
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isDarkTheme ? '#6b7280' : '#9ca3af'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
+                  <div>Select a file to edit</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preview and Console */}
+          {isPreviewVisible && (
+            <div style={{ 
+              width: '50%',
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: 'white',
+              borderLeft: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`
+            }}>
+              {/* Preview */}
+              <div style={{ 
+                flex: isConsoleVisible ? 1 : 'none',
+                height: isConsoleVisible ? 'auto' : '100%',
+                position: 'relative',
+                backgroundColor: 'white'
+              }}>
+                <iframe
+                  ref={iframeRef}
+                  style={{ width: '100%', height: '100%', border: 'none', backgroundColor: 'white' }}
+                  title="Preview"
+                  sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
+                />
+              </div>
+
+              {/* Console */}
+              {isConsoleVisible && (
+                <div style={{ 
+                  height: '192px',
+                  backgroundColor: isDarkTheme ? '#1f2937' : '#f9fafb',
+                  borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{ 
+                    padding: '8px 16px',
+                    backgroundColor: isDarkTheme ? '#374151' : 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0
+                  }}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: isDarkTheme ? '#e5e7eb' : '#374151' }}>
+                      Console
+                    </span>
+                    <button
+                      onClick={clearConsole}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: isDarkTheme ? '#4b5563' : '#e5e7eb',
+                        color: isDarkTheme ? '#e5e7eb' : '#374151',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div style={{ 
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '12px',
+                    fontFamily: 'monospace',
+                    fontSize: '14px'
+                  }}>
+                    {consoleOutput.length === 0 ? (
+                      <div style={{ color: isDarkTheme ? '#6b7280' : '#9ca3af' }}>
+                        Console output will appear here...
+                      </div>
+                    ) : (
+                      consoleOutput.map((msg, index) => (
+                        <div key={index} style={{ 
+                          marginBottom: '4px',
+                          color: msg.method === 'error' ? '#ef4444' : 
+                                 msg.method === 'warn' ? '#f59e0b' : 
+                                 msg.method === 'info' ? '#3b82f6' : 
+                                 (isDarkTheme ? '#d1d5db' : '#374151')
+                        }}>
+                          <span style={{ color: isDarkTheme ? '#6b7280' : '#9ca3af', fontSize: '12px' }}>
+                            [{msg.timestamp}]
+                          </span>{' '}
+                          <span style={{ fontWeight: '600' }}>{msg.method}:</span>{' '}
+                          {msg.args.join(' ')}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status Bar */}
+      <div style={{ 
+        backgroundColor: isDarkTheme ? '#374151' : 'white',
+        borderTop: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
+        padding: '4px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        fontSize: '12px',
+        color: isDarkTheme ? '#9ca3af' : '#6b7280',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span>Theme: {themes.find(t => t.id === theme)?.name}</span>
+          <span>•</span>
+          <span>Font: {fontSize}px</span>
+          <span>•</span>
+          <span>Libraries: {selectedLibraries.length}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#10b981' }}>
+            <span style={{ 
+              display: 'inline-block',
+              width: '8px',
+              height: '8px',
+              backgroundColor: '#10b981',
+              borderRadius: '50%',
+              marginRight: '4px'
+            }}></span>
+            Ready
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-const formatCSS = (code) => {
-  // Basic CSS formatting
-  return code
-    .replace(/\{/g, ' {\n  ')
-    .replace(/;/g, ';\n  ')
-    .replace(/\}/g, '\n}\n')
-    .replace(/\n\s*\n\s*\n/g, '\n\n');
-};
-
-// Code snippets database
-export const codeSnippets = {
-  javascript: {
-    'console.log': 'console.log(${1:message});',
-    'function': 'function ${1:name}(${2:params}) {\n  ${3:// body}\n}',
-    'arrow': 'const ${1:name} = (${2:params}) => {\n  ${3:// body}\n};',
-    'if': 'if (${1:condition}) {\n  ${2:// body}\n}',
-    'for': 'for (let ${1:i} = 0; ${1:i} < ${2:length}; ${1:i}++) {\n  ${3:// body}\n}',
-    'while': 'while (${1:condition}) {\n  ${2:// body}\n}',
-    'switch': 'switch (${1:expression}) {\n  case ${2:value}:\n    ${3:// body}\n    break;\n  default:\n    ${4:// default}\n}',
-    'try': 'try {\n  ${1:// try}\n} catch (${2:error}) {\n  ${3:// catch}\n}',
-    'class': 'class ${1:Name} {\n  constructor(${2:params}) {\n    ${3:// constructor}\n  }\n  \n  ${4:method}() {\n    ${5:// method}\n  }\n}',
-    'async': 'async function ${1:name}(${2:params}) {\n  ${3:// body}\n}',
-    'promise': 'new Promise((resolve, reject) => {\n  ${1:// body}\n});'
-  },
-  html: {
-    'html5': '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${1:Document}</title>\n</head>\n<body>\n  ${2:<!-- content -->}\n</body>\n</html>',
-    'div': '<div class="${1:class}">\n  ${2:content}\n</div>',
-    'link': '<link rel="stylesheet" href="${1:style.css}">',
-    'script': '<script src="${1:script.js}"></script>',
-    'img': '<img src="${1:image.jpg}" alt="${2:description}">',
-    'a': '<a href="${1:url}">${2:text}</a>',
-    'form': '<form action="${1:action}" method="${2:post}">\n  ${3:<!-- fields -->}\n</form>',
-    'input': '<input type="${1:text}" name="${2:name}" placeholder="${3:placeholder}">',
-    'button': '<button type="${1:button}">${2:text}</button>'
-  },
-  css: {
-    'flex': 'display: flex;\njustify-content: ${1:center};\nalign-items: ${2:center};',
-    'grid': 'display: grid;\ngrid-template-columns: ${1:1fr 1fr};\ngap: ${2:1rem};',
-    'animation': '@keyframes ${1:name} {\n  from {\n    ${2:property}: ${3:value};\n  }\n  to {\n    ${2:property}: ${4:value};\n  }\n}',
-    'media': '@media (${1:min-width}: ${2:768px}) {\n  ${3:/* styles */}\n}',
-    'transition': 'transition: ${1:all} ${2:0.3s} ${3:ease};',
-    'transform': 'transform: ${1:translateX}(${2:0});',
-    'gradient': 'background: linear-gradient(${1:135deg}, ${2:#667eea} 0%, ${3:#764ba2} 100%);'
-  }
-};
-
-export default {
-  getFileLanguage,
-  enhancedRunCode,
-  createAutoSave,
-  storage,
-  exportProject,
-  importProject,
-  formatCode,
-  codeSnippets
-};
+export default EnhancedPlayground;
