@@ -435,9 +435,35 @@ This is a sample project in the playground.
         zIndex: 100
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
-            Code Playground
-          </h1>
+         <button
+  onClick={() => {
+    // Navigate back to home page
+    window.location.hash = 'home';
+    // Or if using the navigation function, you could do:
+    // window.history.back();
+  }}
+  style={{
+    background: 'none',
+    border: 'none',
+    color: 'inherit',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    transition: 'background-color 0.2s ease',
+    fontSize: '20px', 
+    fontWeight: 'bold', 
+    margin: 0
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#f3f4f6';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.backgroundColor = 'transparent';
+  }}
+  title="Go back to home page"
+>
+  Code Playground
+</button>
         </div>
 
         {/* Toolbar controls */}

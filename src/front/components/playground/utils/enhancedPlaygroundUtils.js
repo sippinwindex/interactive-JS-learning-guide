@@ -1,4 +1,23 @@
-// Enhanced Playground Utilities
+// Add error handling for unhandled errors (simplified)
+    if (enableErrorHandling) {
+      const errorScript = `
+        <script>
+          let errorCount = 0;
+          const maxErrors = 5;
+          
+          window.addEventListener('error', function(e) {
+            if (errorCount >= maxErrors) return;
+            errorCount++;
+            
+            // Don't report our own console capture errors
+            if (e.message && e.message.includes('postMessage')) return;
+            
+            console.error('Global error:', e.message, 'at line', e.lineno);
+          });
+        </script>
+      `;
+      htmlContent = htmlContent.replace('</head>', `${errorScript}\n</head>`);
+    }// Enhanced Playground Utilities
 // This file contains ONLY utility functions, no React components
 
 // Enhanced code execution with error handling and console capture
@@ -50,23 +69,43 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
             window.__consoleSetup = true;
             
             const originalConsole = window.console;
+            let messageCount = 0;
+            const maxMessages = 100; // Prevent spam
+            
             ['log', 'warn', 'error', 'info'].forEach(method => {
               window.console[method] = function(...args) {
                 originalConsole[method].apply(originalConsole, args);
+                
+                // Prevent infinite loops and spam
+                if (messageCount >= maxMessages) return;
+                messageCount++;
+                
                 try {
+                  // Don't capture our own error messages to prevent loops
+                  const message = args[0];
+                  if (typeof message === 'string' && 
+                      (message.includes('postMessage') || 
+                       message.includes('call stack') || 
+                       message.includes('Script error in'))) {
+                    return;
+                  }
+                  
                   window.parent.postMessage({
                     type: 'console',
                     method: method,
                     args: args.map(arg => {
                       try {
-                        return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+                        if (typeof arg === 'object' && arg !== null) {
+                          return JSON.stringify(arg, null, 2);
+                        }
+                        return String(arg);
                       } catch (e) {
-                        return '[Object]';
+                        return '[Circular Object]';
                       }
                     })
                   }, '*');
                 } catch (e) {
-                  // Ignore postMessage errors
+                  // Silently ignore postMessage errors to prevent loops
                 }
               };
             });
@@ -76,38 +115,6 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
       htmlContent = htmlContent.replace('</head>', `${consoleScript}\n</head>`);
     }
 
-    // Add error handling if enabled
-    if (enableErrorHandling) {
-      const errorScript = `
-        <script>
-          window.addEventListener('error', function(e) {
-            try {
-              window.parent.postMessage({
-                type: 'console',
-                method: 'error',
-                args: [e.message + ' at line ' + e.lineno + ' in ' + e.filename]
-              }, '*');
-            } catch (err) {
-              // Ignore postMessage errors
-            }
-          });
-          
-          window.addEventListener('unhandledrejection', function(e) {
-            try {
-              window.parent.postMessage({
-                type: 'console',
-                method: 'error',
-                args: ['Unhandled Promise Rejection: ' + e.reason]
-              }, '*');
-            } catch (err) {
-              // Ignore postMessage errors
-            }
-          });
-        </script>
-      `;
-      htmlContent = htmlContent.replace('</head>', `${errorScript}\n</head>`);
-    }
-
     // Inject JavaScript files - wrap each in try-catch and ensure DOM is ready
     Object.entries(files).forEach(([path, file]) => {
       if (file.language === 'javascript' && path.endsWith('.js')) {
@@ -115,29 +122,18 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
         <script>
           (function() {
             // Ensure DOM is ready
-            if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', function() {
-                executeScript();
-              });
-            } else {
-              executeScript();
-            }
-            
             function executeScript() {
               try {
                 ${file.content}
               } catch (e) {
-                console.error('Script error in ${path}:', e);
-                try {
-                  window.parent.postMessage({
-                    type: 'console',
-                    method: 'error',
-                    args: ['Script error in ${path}: ' + e.message]
-                  }, '*');
-                } catch (err) {
-                  // Ignore postMessage errors
-                }
+                console.error('Script error in ${path}:', e.message);
               }
+            }
+            
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', executeScript);
+            } else {
+              executeScript();
             }
           })();
         </script>`;
