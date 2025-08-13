@@ -160,7 +160,7 @@ export const moduleContentMap = {
   'error-handling-async': () => import('./modules/async/ErrorHandlingAsync'),
   'async-patterns': () => import('./modules/async/AsyncPatterns'),
   
-  'objects-creation': () => import('./modules/oop/ObjectsCreation'),
+  'objects-creation': () => import('./modules/oop/ObjectCreation'),  // ✅ Fixed: removed 's'
   'prototypes': () => import('./modules/oop/Prototypes'),
   'es6-classes': () => import('./modules/oop/ES6Classes'),
   'inheritance': () => import('./modules/oop/Inheritance'),
