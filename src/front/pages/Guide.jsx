@@ -1,6 +1,7 @@
-// src/front/pages/Guide.jsx - Enhanced modular learning guide
+// src/front/pages/Guide.jsx - Updated with playground integration
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { learningPaths, moduleContentMap, getPathProgress, getAllModules } from '../data/learningContent';
+import { CodeBlock, JavaScriptExample, InteractiveExample } from '../components/CodeBlock';
 import {
   CompassIcon,
   BookOpenIcon,
@@ -94,10 +95,17 @@ export const Guide = ({ navigateTo }) => {
   const currentPath = learningPaths[activeModule];
   const currentPathProgress = getPathProgress(activeModule, completedLessons);
 
+  // Helper to format lesson title
+  const formatLessonTitle = (moduleId) => {
+    return moduleId.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header - Same as before */}
         <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-all duration-1000 transform ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
         }`}>
@@ -127,7 +135,7 @@ export const Guide = ({ navigateTo }) => {
           </div>
         </div>
 
-        {/* Path Navigation */}
+        {/* Path Navigation - Same as before */}
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 transition-all duration-700 delay-200 transform ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}>
@@ -170,7 +178,7 @@ export const Guide = ({ navigateTo }) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Module List */}
+          {/* Module List - Same as before */}
           <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24 h-fit transition-all duration-700 delay-400 transform ${
             isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
           }`}>
@@ -199,9 +207,7 @@ export const Guide = ({ navigateTo }) => {
               {currentPath.modules?.map((moduleId, index) => {
                 const isCompleted = completedLessons.includes(moduleId);
                 const isSelected = selectedLesson === moduleId;
-                const displayName = moduleId.split('-').map(word => 
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ');
+                const displayName = formatLessonTitle(moduleId);
                 
                 return (
                   <button
@@ -254,7 +260,7 @@ export const Guide = ({ navigateTo }) => {
             </div>
           </div>
 
-          {/* Lesson Content */}
+          {/* 🔥 ENHANCED Lesson Content with CodeBlock Integration */}
           <div className="lg:col-span-2">
             {selectedLesson && currentLessonContent ? (
               <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all duration-500 transform ${
@@ -309,25 +315,76 @@ export const Guide = ({ navigateTo }) => {
                         </ul>
                       </div>
 
+                      {/* 🔥 ENHANCED: Interactive Code Example */}
                       {currentLessonContent.example && (
                         <div className="mb-6">
                           <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
                             <CodeIcon className="w-5 h-5 text-green-600 mr-2" />
-                            Code Example
+                            Interactive Example
                           </h3>
-                          <div className="bg-gray-900 rounded-lg overflow-hidden">
-                            <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
-                              <span className="text-gray-400 text-sm">JavaScript</span>
-                              <button
-                                onClick={() => navigator.clipboard.writeText(currentLessonContent.example)}
-                                className="text-gray-400 hover:text-white text-sm transition-colors"
-                              >
-                                Copy
-                              </button>
+                          
+                          {/* Use the enhanced CodeBlock with playground integration */}
+                          <JavaScriptExample
+                            code={currentLessonContent.example}
+                            title={`${currentLessonContent.title} - Example`}
+                            navigateTo={navigateTo}
+                            enablePlayground={true}
+                          />
+                          
+                          {/* Helpful tip */}
+                          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div className="flex items-start space-x-2">
+                              <LightbulbIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                              <div className="text-sm text-blue-700 dark:text-blue-300">
+                                <strong>💡 Pro Tip:</strong> Click "Try it" to practice this example in the interactive playground while keeping this lesson open in another tab!
+                              </div>
                             </div>
-                            <pre className="p-4 text-gray-300 overflow-x-auto">
-                              <code>{currentLessonContent.example}</code>
-                            </pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 🔥 ENHANCED: Additional Interactive Examples (if module provides them) */}
+                      {currentLessonContent.additionalExamples?.map((example, index) => (
+                        <div key={index} className="mb-6">
+                          <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+                            {example.title}
+                          </h4>
+                          <p className="text-gray-600 dark:text-gray-400 mb-3">
+                            {example.description}
+                          </p>
+                          
+                          <InteractiveExample
+                            code={example.code}
+                            title={example.title}
+                            navigateTo={navigateTo}
+                          >
+                            {example.hint && (
+                              <p><strong>Hint:</strong> {example.hint}</p>
+                            )}
+                          </InteractiveExample>
+                        </div>
+                      ))}
+
+                      {/* 🔥 ENHANCED: Practice Exercise (if module provides it) */}
+                      {currentLessonContent.practiceExercise && (
+                        <div className="mb-6 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                          <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-200 mb-4 flex items-center">
+                            <TrophyIcon className="w-5 h-5 mr-2" />
+                            Practice Exercise
+                          </h3>
+                          <p className="text-purple-700 dark:text-purple-300 mb-4">
+                            {currentLessonContent.practiceExercise.description}
+                          </p>
+                          
+                          <CodeBlock
+                            code={currentLessonContent.practiceExercise.starterCode}
+                            title="Practice Exercise - Starter Code"
+                            navigateTo={navigateTo}
+                            enablePlayground={true}
+                          />
+                          
+                          <div className="mt-4 text-sm text-purple-600 dark:text-purple-400">
+                            <strong>Goal:</strong> {currentLessonContent.practiceExercise.goal}
                           </div>
                         </div>
                       )}
@@ -360,7 +417,7 @@ export const Guide = ({ navigateTo }) => {
                         >
                           <div className="flex items-center space-x-2">
                             <PlayCircleIcon className="w-4 h-4" />
-                            <span>Try in Playground</span>
+                            <span>Open Playground</span>
                           </div>
                         </button>
                       </div>
@@ -387,7 +444,7 @@ export const Guide = ({ navigateTo }) => {
           </div>
         </div>
 
-        {/* Progress Overview */}
+        {/* Progress Overview - Same as before */}
         <div className={`mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all duration-700 delay-800 transform ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}>
