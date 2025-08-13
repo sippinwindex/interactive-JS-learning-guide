@@ -22,19 +22,14 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
 
     let htmlContent = htmlFile.content;
 
+    // Remove any existing script references first to avoid duplicates
+    htmlContent = htmlContent.replace(/<script[^>]*src=["'][^"']*["'][^>]*><\/script>/gi, '');
+
     // Inject CSS files
     Object.entries(files).forEach(([path, file]) => {
       if (file.language === 'css' && path.endsWith('.css')) {
         const cssTag = `<style>\n${file.content}\n</style>`;
         htmlContent = htmlContent.replace('</head>', `${cssTag}\n</head>`);
-      }
-    });
-
-    // Inject JavaScript files
-    Object.entries(files).forEach(([path, file]) => {
-      if (file.language === 'javascript' && path.endsWith('.js')) {
-        const scriptTag = `<script>\n${file.content}\n</script>`;
-        htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
       }
     });
 
@@ -50,15 +45,29 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
       const consoleScript = `
         <script>
           (function() {
+            // Prevent multiple console capture setups
+            if (window.__consoleSetup) return;
+            window.__consoleSetup = true;
+            
             const originalConsole = window.console;
             ['log', 'warn', 'error', 'info'].forEach(method => {
               window.console[method] = function(...args) {
                 originalConsole[method].apply(originalConsole, args);
-                window.parent.postMessage({
-                  type: 'console',
-                  method: method,
-                  args: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg))
-                }, '*');
+                try {
+                  window.parent.postMessage({
+                    type: 'console',
+                    method: method,
+                    args: args.map(arg => {
+                      try {
+                        return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+                      } catch (e) {
+                        return '[Object]';
+                      }
+                    })
+                  }, '*');
+                } catch (e) {
+                  // Ignore postMessage errors
+                }
               };
             });
           })();
@@ -72,18 +81,71 @@ export const enhancedRunCode = (files, iframeRef, options = {}) => {
       const errorScript = `
         <script>
           window.addEventListener('error', function(e) {
-            window.parent.postMessage({
-              type: 'console',
-              method: 'error',
-              args: [e.message + ' at line ' + e.lineno]
-            }, '*');
+            try {
+              window.parent.postMessage({
+                type: 'console',
+                method: 'error',
+                args: [e.message + ' at line ' + e.lineno + ' in ' + e.filename]
+              }, '*');
+            } catch (err) {
+              // Ignore postMessage errors
+            }
+          });
+          
+          window.addEventListener('unhandledrejection', function(e) {
+            try {
+              window.parent.postMessage({
+                type: 'console',
+                method: 'error',
+                args: ['Unhandled Promise Rejection: ' + e.reason]
+              }, '*');
+            } catch (err) {
+              // Ignore postMessage errors
+            }
           });
         </script>
       `;
       htmlContent = htmlContent.replace('</head>', `${errorScript}\n</head>`);
     }
 
-    // Write to iframe
+    // Inject JavaScript files - wrap each in try-catch and ensure DOM is ready
+    Object.entries(files).forEach(([path, file]) => {
+      if (file.language === 'javascript' && path.endsWith('.js')) {
+        const scriptTag = `
+        <script>
+          (function() {
+            // Ensure DOM is ready
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', function() {
+                executeScript();
+              });
+            } else {
+              executeScript();
+            }
+            
+            function executeScript() {
+              try {
+                ${file.content}
+              } catch (e) {
+                console.error('Script error in ${path}:', e);
+                try {
+                  window.parent.postMessage({
+                    type: 'console',
+                    method: 'error',
+                    args: ['Script error in ${path}: ' + e.message]
+                  }, '*');
+                } catch (err) {
+                  // Ignore postMessage errors
+                }
+              }
+            }
+          })();
+        </script>`;
+        htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
+      }
+    });
+
+    // Clear iframe and write new content
     const doc = iframeRef.contentDocument || iframeRef.contentWindow.document;
     doc.open();
     doc.write(htmlContent);
