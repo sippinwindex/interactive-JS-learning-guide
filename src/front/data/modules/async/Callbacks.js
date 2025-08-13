@@ -75,6 +75,55 @@ function readFile(filename, callback) {
         } else {
             callback(null, \`Contents of \${filename}\`);
         }
+    }, 500);
+}
+
+// Using error-first callback
+readFile('data.txt', function(error, data) {
+    if (error) {
+        console.error('Error reading file:', error.message);
+    } else {
+        console.log('File contents:', data);
+    }
+});
+
+readFile('nonexistent.txt', function(error, data) {
+    if (error) {
+        console.error('Error reading file:', error.message);
+    } else {
+        console.log('File contents:', data);
+    }
+});
+
+// HTTP Request with Callbacks
+function makeRequest(url, callback) {
+    // Simulate HTTP request
+    console.log(\`Making request to \${url}\`);
+    
+    setTimeout(function() {
+        const success = Math.random() > 0.3;
+        
+        if (success) {
+            const data = { id: 1, name: 'Sample Data' };
+            callback(null, data);
+        } else {
+            callback(new Error('Network error'), null);
+        }
+    }, Math.random() * 1000);
+}
+
+makeRequest('https://api.example.com/data', function(error, data) {
+    if (error) {
+        console.error('Request failed:', error.message);
+    } else {
+        console.log('Request successful:', data);
+    }
+});
+
+// Callback Hell Example
+console.log('=== Callback Hell ===');
+
+// Deeply nested callbacks - hard to read and maintain
 function callbackHellExample() {
     setTimeout(function() {
         console.log('Step 1 completed');
@@ -748,9 +797,9 @@ Promise.allSettled(settledPromises)
     .then(results => {
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
-                console.log(\`Promise \${index + 1} fulfilled:`, result.value.name);
+                console.log(\`Promise \${index + 1} fulfilled:\`, result.value.name);
             } else {
-                console.log(\`Promise \${index + 1} rejected:`, result.reason.message);
+                console.log(\`Promise \${index + 1} rejected:\`, result.reason.message);
             }
         });
     });
@@ -1735,70 +1784,3 @@ console.log(counter.getValue());  // 11`,
   nextModules: ['prototypes'],
   prerequisites: ['functions-basics', 'objects-basics']
 };
-
-// Using error-first callback
-readFile('data.txt', function(error, data) {
-    if (error) {
-        console.error('Error reading file:', error.message);
-    } else {
-        console.log('File contents:', data);
-    }
-});
-
-readFile('nonexistent.txt', function(error, data) {
-    if (error) {
-        console.error('Error reading file:', error.message);
-    } else {
-        console.log('File contents:', data);
-    }
-});
-
-// HTTP Request with Callbacks
-function makeRequest(url, callback) {
-    // Simulate HTTP request
-    console.log(\`Making request to \${url}\`);
-    
-    setTimeout(function() {
-        const success = Math.random() > 0.3;
-        
-        if (success) {
-            const data = { id: 1, name: 'Sample Data' };
-            callback(null, data);
-        } else {
-            callback(new Error('Network error'), null);
-        }
-    }, Math.random() * 1000);
-}
-
-makeRequest('https://api.example.com/data', function(error, data) {
-    if (error) {
-        console.error('Request failed:', error.message);
-    } else {
-        console.log('Request successful:', data);
-    }
-});
-
-// Callback Hell Example
-console.log('=== Callback Hell ===');
-
-// Deeply nested callbacks - hard to read and maintain
-function callbackHellExample() {
-    setTimeout(function() {
-        console.log('Step 1 completed');
-        
-        setTimeout(function() {
-            console.log('Step 2 completed');
-            
-            setTimeout(function() {
-                console.log('Step 3 completed');
-                
-                setTimeout(function() {
-                    console.log('Step 4 completed');
-                    
-                    setTimeout(function() {
-                        console.log('All steps completed!');
-                    }, 100);
-                }, 100);
-            }, 100);
-        }, 100);
-    },
