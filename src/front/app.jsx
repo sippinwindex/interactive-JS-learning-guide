@@ -103,6 +103,21 @@ const SimpleRouter = () => {
     setTimeout(() => setIsLoading(false), 100);
   }, []);
 
+  // Listen for hash changes (ADD THIS)
+useEffect(() => {
+  const handleHashChange = () => {
+    const hash = window.location.hash.slice(1); // Remove #
+    if (hash && ['home', 'documentation', 'playground', 'challenges', 'guide'].includes(hash)) {
+      setCurrentPage(hash);
+    } else if (!hash) {
+      setCurrentPage('home');
+    }
+  };
+
+  window.addEventListener('hashchange', handleHashChange);
+  return () => window.removeEventListener('hashchange', handleHashChange);
+}, []);
+
   // Update URL hash when page changes
   useEffect(() => {
     window.location.hash = currentPage;
