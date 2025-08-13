@@ -1,637 +1,746 @@
-// src/front/data/modules/advanced/Performance.js
-export const Performance = {
-  title: 'Performance Optimization',
-  duration: '40 min',
+export default {
+  title: 'Debugging Techniques',
+  duration: '50 min',
   difficulty: 'Advanced',
-  overview: 'Learn to optimize JavaScript performance. Master profiling, benchmarking, and techniques for writing fast, efficient code.',
+  overview: 'Master JavaScript debugging with console methods, debugger statements, browser dev tools, and advanced debugging strategies for complex applications.',
+  
   keyPoints: [
-    'Measure performance before optimizing',
-    'Understanding JavaScript engine optimization',
-    'DOM manipulation optimization techniques',
-    'Debouncing and throttling for better UX',
-    'Lazy loading and code splitting',
-    'Memory-efficient programming patterns'
+    'Console object methods beyond console.log',
+    'Using debugger statement and breakpoints',
+    'Browser developer tools navigation',
+    'Error objects and stack traces',
+    'Debugging async code and promises',
+    'Performance profiling and memory debugging'
   ],
-  example: `// Performance Measurement
-console.log('=== Performance Measurement ===');
 
-// Basic timing with performance.now()
-function measurePerformance(fn, label) {
-  const start = performance.now();
-  const result = fn();
-  const end = performance.now();
-  console.log(\`\${label}: \${(end - start).toFixed(2)}ms\`);
-  return result;
+  example: `// Console Debugging Methods
+console.log('=== Console Debugging Methods ===');
+
+// Basic console methods
+console.log('Standard log message');
+console.info('ℹ️ Info message');
+console.warn('⚠️ Warning message');
+console.error('❌ Error message');
+
+// Console.table() for structured data
+const users = [
+    { id: 1, name: 'Alice', role: 'admin', active: true },
+    { id: 2, name: 'Bob', role: 'user', active: false },
+    { id: 3, name: 'Charlie', role: 'moderator', active: true }
+];
+
+console.table(users);
+console.table(users, ['name', 'role']); // Show only specific columns
+
+// Console.group() for organized logging
+console.group('User Processing');
+console.log('Loading users...');
+console.group('Validation');
+console.log('Checking user permissions');
+console.log('Validating email formats');
+console.groupEnd();
+console.log('Users loaded successfully');
+console.groupEnd();
+
+// Console.time() for performance measurement
+console.time('Array Processing');
+const largeArray = Array.from({ length: 100000 }, (_, i) => i);
+const filtered = largeArray.filter(n => n % 2 === 0);
+console.timeEnd('Array Processing');
+
+// Console.count() for tracking occurrences
+function trackFunctionCalls(functionName) {
+    console.count(\`\${functionName} called\`);
 }
 
-// Example functions to measure
-function slowLoop() {
-  let sum = 0;
-  for (let i = 0; i < 1000000; i++) {
-    sum += i;
-  }
-  return sum;
+trackFunctionCalls('fetchData');
+trackFunctionCalls('processUser');
+trackFunctionCalls('fetchData');
+trackFunctionCalls('fetchData');
+
+// Console.trace() for stack trace
+function level1() {
+    level2();
 }
 
-function fastLoop() {
-  const n = 1000000;
-  return (n * (n - 1)) / 2; // Mathematical formula
+function level2() {
+    level3();
 }
 
-measurePerformance(slowLoop, 'Slow loop');
-measurePerformance(fastLoop, 'Fast formula');
-
-// Performance API for detailed measurements
-if (window.performance && window.performance.mark) {
-  performance.mark('start-complex-operation');
-  // Complex operation here
-  let result = 0;
-  for (let i = 0; i < 100000; i++) {
-    result += Math.sqrt(i);
-  }
-  performance.mark('end-complex-operation');
-  performance.measure('complex-operation', 'start-complex-operation', 'end-complex-operation');
-  const measures = performance.getEntriesByType('measure');
-  console.log('Performance measures:', measures);
+function level3() {
+    console.trace('Stack trace from level3');
 }
 
-// Benchmarking utility
-class Benchmark {
-  constructor(name) {
-    this.name = name;
-    this.results = [];
-  }
+level1();
 
-  run(fn, iterations = 1000) {
-    const times = [];
-    // Warm-up runs
-    for (let i = 0; i < 10; i++) {
-      fn();
+// Console.assert() for conditional logging
+const temperature = 45;
+console.assert(temperature < 40, 'Temperature is too high!', { temperature });
+
+const userRole = 'guest';
+console.assert(userRole === 'admin', 'User is not admin', { userRole });
+
+// Debugger Statement and Breakpoints
+console.log('\\n=== Debugger Statement ===');
+
+function calculateTotalPrice(items) {
+    let total = 0;
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Uncomment to trigger debugger
+        // debugger; // Execution will pause here when dev tools are open
+        
+        if (item.price && item.quantity) {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            
+            console.log(\`Item: \${item.name}, Total: \${itemTotal}\`);
+        }
     }
-    // Actual measurements
-    for (let i = 0; i < iterations; i++) {
-      const start = performance.now();
-      fn();
-      const end = performance.now();
-      times.push(end - start);
+    
+    return total;
+}
+
+const shoppingCart = [
+    { name: 'Laptop', price: 999, quantity: 1 },
+    { name: 'Mouse', price: 25, quantity: 2 },
+    { name: 'Keyboard', price: 75, quantity: 1 }
+];
+
+const totalPrice = calculateTotalPrice(shoppingCart);
+console.log('Total cart price:', totalPrice);
+
+// Error Objects and Stack Traces
+console.log('\\n=== Error Handling and Stack Traces ===');
+
+function createDetailedError(message, code, context) {
+    const error = new Error(message);
+    error.code = code;
+    error.context = context;
+    error.timestamp = new Date().toISOString();
+    
+    // Custom stack trace manipulation
+    if (Error.captureStackTrace) {
+        Error.captureStackTrace(error, createDetailedError);
     }
-    const avg = times.reduce((sum, time) => sum + time, 0) / times.length;
-    const min = Math.min(...times);
-    const max = Math.max(...times);
-    const result = {
-      name: this.name,
-      iterations,
-      average: avg.toFixed(4),
-      min: min.toFixed(4),
-      max: max.toFixed(4)
+    
+    return error;
+}
+
+function processPayment(amount, cardNumber) {
+    try {
+        if (!amount || amount <= 0) {
+            throw createDetailedError(
+                'Invalid payment amount',
+                'INVALID_AMOUNT',
+                { amount, cardNumber: '****' + cardNumber?.slice(-4) }
+            );
+        }
+        
+        if (!cardNumber || cardNumber.length < 16) {
+            throw createDetailedError(
+                'Invalid card number',
+                'INVALID_CARD',
+                { cardLength: cardNumber?.length }
+            );
+        }
+        
+        // Simulate processing
+        return { success: true, transactionId: 'TXN_' + Date.now() };
+        
+    } catch (error) {
+        console.error('Payment processing failed:');
+        console.error('Message:', error.message);
+        console.error('Code:', error.code);
+        console.error('Context:', error.context);
+        console.error('Stack:', error.stack);
+        
+        throw error;
+    }
+}
+
+// Test error handling
+try {
+    processPayment(0, '1234');
+} catch (error) {
+    console.log('Caught payment error:', error.code);
+}
+
+// Debugging Async Code
+console.log('\\n=== Debugging Async Code ===');
+
+async function debugAsyncOperations() {
+    console.group('Async Debugging Demo');
+    
+    try {
+        console.log('🚀 Starting async operations...');
+        
+        // Promise with detailed logging
+        const fetchUser = (id) => {
+            console.log(\`📡 Fetching user \${id}...\`);
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (id > 0) {
+                        const user = { id, name: \`User \${id}\`, email: \`user\${id}@example.com\` };
+                        console.log(\`✅ User \${id} fetched:\`, user);
+                        resolve(user);
+                    } else {
+                        const error = new Error(\`Invalid user ID: \${id}\`);
+                        console.error(\`❌ Failed to fetch user \${id}:\`, error);
+                        reject(error);
+                    }
+                }, 500);
+            });
+        };
+        
+        // Sequential async operations with logging
+        const user1 = await fetchUser(1);
+        console.log('User 1 processing complete');
+        
+        const user2 = await fetchUser(2);
+        console.log('User 2 processing complete');
+        
+        // Parallel operations with Promise.all
+        console.log('🔄 Starting parallel operations...');
+        const parallelResults = await Promise.all([
+            fetchUser(3),
+            fetchUser(4),
+            fetchUser(5)
+        ]);
+        
+        console.log('✅ All parallel operations complete:', parallelResults.length);
+        
+        return { user1, user2, parallelResults };
+        
+    } catch (error) {
+        console.error('🚨 Async operation failed:', error);
+        throw error;
+    } finally {
+        console.log('🏁 Async debugging demo complete');
+        console.groupEnd();
+    }
+}
+
+debugAsyncOperations()
+    .then(results => console.log('Final results:', Object.keys(results)))
+    .catch(error => console.error('Top-level error:', error.message));
+
+// Advanced Debugging Utilities
+console.log('\\n=== Advanced Debugging Utilities ===');
+
+// 1. Function call tracker
+function createFunctionTracker() {
+    const calls = new Map();
+    
+    return {
+        track(functionName, args = []) {
+            const timestamp = Date.now();
+            const callId = \`\${functionName}_\${timestamp}\`;
+            
+            calls.set(callId, {
+                name: functionName,
+                args: [...args],
+                startTime: timestamp,
+                endTime: null,
+                duration: null
+            });
+            
+            console.log(\`🔍 [\${callId}] Starting \${functionName}(\`, ...args, ')')
+            return callId;
+        },
+        
+        end(callId, result) {
+            if (calls.has(callId)) {
+                const call = calls.get(callId);
+                call.endTime = Date.now();
+                call.duration = call.endTime - call.startTime;
+                call.result = result;
+                
+                console.log(\`✅ [\${callId}] Completed in \${call.duration}ms:\`, result);
+            }
+        },
+        
+        getStats() {
+            const stats = {};
+            calls.forEach(call => {
+                if (!stats[call.name]) {
+                    stats[call.name] = {
+                        count: 0,
+                        totalDuration: 0,
+                        averageDuration: 0
+                    };
+                }
+                
+                stats[call.name].count++;
+                if (call.duration) {
+                    stats[call.name].totalDuration += call.duration;
+                    stats[call.name].averageDuration = 
+                        stats[call.name].totalDuration / stats[call.name].count;
+                }
+            });
+            
+            return stats;
+        }
     };
-    this.results.push(result);
-    console.log(\`Benchmark \${this.name}:\`, result);
+}
+
+const tracker = createFunctionTracker();
+
+function expensiveCalculation(n) {
+    const callId = tracker.track('expensiveCalculation', [n]);
+    
+    let result = 0;
+    for (let i = 0; i < n; i++) {
+        result += Math.sqrt(i);
+    }
+    
+    tracker.end(callId, result);
     return result;
-  }
+}
 
-  compare(fn1, fn2, label1 = 'Function 1', label2 = 'Function 2') {
-    console.log(\`Comparing \${label1} vs \${label2}:\`);
-    const bench1 = new Benchmark(label1);
-    const bench2 = new Benchmark(label2);
-    const result1 = bench1.run(fn1);
-    const result2 = bench2.run(fn2);
-    const ratio = (parseFloat(result2.average) / parseFloat(result1.average)).toFixed(2);
-    if (ratio > 1) {
-      console.log(\`\${label1} is \${ratio}x faster than \${label2}\`);
+expensiveCalculation(100000);
+expensiveCalculation(50000);
+console.table(tracker.getStats());
+
+// 2. Memory usage tracker
+function trackMemoryUsage(label) {
+    if (performance.memory) {
+        const memory = performance.memory;
+        console.log(\`🧠 Memory [\${label}]:\`, {
+            used: \`\${(memory.usedJSHeapSize / 1048576).toFixed(2)} MB\`,
+            total: \`\${(memory.totalJSHeapSize / 1048576).toFixed(2)} MB\`,
+            limit: \`\${(memory.jsHeapSizeLimit / 1048576).toFixed(2)} MB\`
+        });
     } else {
-      console.log(\`\${label2} is \${(1/ratio).toFixed(2)}x faster than \${label1}\`);
+        console.log('Memory tracking not available');
     }
-  }
 }
 
-// Array Performance Optimizations
-console.log('=== Array Performance ===');
+trackMemoryUsage('Before large array creation');
+const hugeArray = new Array(1000000).fill(0).map((_, i) => ({ id: i, data: 'x'.repeat(100) }));
+trackMemoryUsage('After large array creation');
 
-function createArrayForLoop() {
-  const arr = [];
-  for (let i = 0; i < 10000; i++) {
-    arr.push(i);
-  }
-  return arr;
-}
-
-function createArrayConstructor() {
-  return new Array(10000).fill(0).map((_, i) => i);
-}
-
-function createArrayFrom() {
-  return Array.from({ length: 10000 }, (_, i) => i);
-}
-
-const arrayBench = new Benchmark('Array Creation');
-arrayBench.compare(createArrayForLoop, createArrayConstructor, 'For Loop', 'Array Constructor');
-arrayBench.compare(createArrayForLoop, createArrayFrom, 'For Loop', 'Array.from');
-
-// Array iteration performance
-const testArray = Array.from({ length: 100000 }, (_, i) => i);
-
-function forLoop() {
-  let sum = 0;
-  for (let i = 0; i < testArray.length; i++) {
-    sum += testArray[i];
-  }
-  return sum;
-}
-
-function forOfLoop() {
-  let sum = 0;
-  for (const item of testArray) {
-    sum += item;
-  }
-  return sum;
-}
-
-function forEachMethod() {
-  let sum = 0;
-  testArray.forEach(item => sum += item);
-  return sum;
-}
-
-function reduceMethod() {
-  return testArray.reduce((sum, item) => sum + item, 0);
-}
-
-const iterationBench = new Benchmark('Array Iteration');
-iterationBench.compare(forLoop, forOfLoop, 'for loop', 'for...of');
-iterationBench.compare(forLoop, forEachMethod, 'for loop', 'forEach');
-iterationBench.compare(forLoop, reduceMethod, 'for loop', 'reduce');
-
-// Object Performance
-console.log('=== Object Performance ===');
-
-const testObj = {};
-for (let i = 0; i < 1000; i++) {
-  testObj[\`prop\${i}\`] = i;
-}
-
-function dotNotation() {
-  let sum = 0;
-  sum += testObj.prop1 || 0;
-  sum += testObj.prop2 || 0;
-  sum += testObj.prop3 || 0;
-  return sum;
-}
-
-function bracketNotation() {
-  let sum = 0;
-  sum += testObj['prop1'] || 0;
-  sum += testObj['prop2'] || 0;
-  sum += testObj['prop3'] || 0;
-  return sum;
-}
-
-function cachedAccess() {
-  const { prop1 = 0, prop2 = 0, prop3 = 0 } = testObj;
-  return prop1 + prop2 + prop3;
-}
-
-const objectBench = new Benchmark('Object Access');
-objectBench.compare(dotNotation, bracketNotation, 'Dot notation', 'Bracket notation');
-objectBench.compare(dotNotation, cachedAccess, 'Dot notation', 'Destructuring');
-
-// String Performance
-console.log('=== String Performance ===');
-
-const strings = Array.from({ length: 1000 }, (_, i) => \`string \${i}\`);
-
-function stringConcatenation() {
-  let result = '';
-  for (const str of strings) {
-    result += str;
-  }
-  return result;
-}
-
-function stringJoin() {
-  return strings.join('');
-}
-
-function templateLiterals() {
-  let result = '';
-  for (const str of strings) {
-    result = \`\${result}\${str}\`;
-  }
-  return result;
-}
-
-const stringBench = new Benchmark('String Operations');
-stringBench.compare(stringConcatenation, stringJoin, 'Concatenation', 'Array.join');
-stringBench.compare(stringConcatenation, templateLiterals, 'Concatenation', 'Template literals');
-
-// DOM Performance Optimization
-console.log('=== DOM Performance ===');
-
-function inefficientDOMUpdate() {
-  const container = document.createElement('div');
-  // Bad: Multiple DOM manipulations
-  for (let i = 0; i < 100; i++) {
-    const element = document.createElement('div');
-    element.textContent = \`Item \${i}\`;
-    element.className = 'item';
-    container.appendChild(element);
-  }
-  return container;
-}
-
-function efficientDOMUpdate() {
-  const container = document.createElement('div');
-  const fragment = document.createDocumentFragment();
-  // Good: Use DocumentFragment
-  for (let i = 0; i < 100; i++) {
-    const element = document.createElement('div');
-    element.textContent = \`Item \${i}\`;
-    element.className = 'item';
-    fragment.appendChild(element);
-  }
-  container.appendChild(fragment);
-  return container;
-}
-
-function stringBasedDOMUpdate() {
-  const container = document.createElement('div');
-  // Alternative: Build HTML string
-  let html = '';
-  for (let i = 0; i < 100; i++) {
-    html += \`<div class="item">Item \${i}</div>\`;
-  }
-  container.innerHTML = html;
-  return container;
-}
-
-const domBench = new Benchmark('DOM Updates');
-domBench.compare(inefficientDOMUpdate, efficientDOMUpdate, 'Individual appends', 'DocumentFragment');
-domBench.compare(efficientDOMUpdate, stringBasedDOMUpdate, 'DocumentFragment', 'innerHTML');
-
-// Event Handling Optimization
-console.log('=== Event Optimization ===');
-
-// Debounce implementation
-function debounce(func, wait, immediate) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      timeout = null;
-      if (!immediate) func(...args);
+// 3. Object state inspector
+function createStateInspector(obj, label = 'Object') {
+    const snapshots = [];
+    
+    return {
+        snapshot(description = 'Snapshot') {
+            const snapshot = {
+                timestamp: Date.now(),
+                description,
+                state: JSON.parse(JSON.stringify(obj)) // Deep clone
+            };
+            
+            snapshots.push(snapshot);
+            console.log(\`📸 [\${label}] \${description}:\`, snapshot.state);
+            return snapshots.length - 1;
+        },
+        
+        compare(index1, index2) {
+            if (index1 >= snapshots.length || index2 >= snapshots.length) {
+                console.error('Invalid snapshot indices');
+                return;
+            }
+            
+            const snap1 = snapshots[index1];
+            const snap2 = snapshots[index2];
+            
+            console.group(\`🔍 [\${label}] Comparing snapshots\`);
+            console.log('Snapshot 1:', snap1.description, snap1.state);
+            console.log('Snapshot 2:', snap2.description, snap2.state);
+            
+            // Simple diff (for demonstration)
+            const keys1 = Object.keys(snap1.state);
+            const keys2 = Object.keys(snap2.state);
+            
+            const addedKeys = keys2.filter(k => !keys1.includes(k));
+            const removedKeys = keys1.filter(k => !keys2.includes(k));
+            const changedKeys = keys1.filter(k => 
+                keys2.includes(k) && 
+                JSON.stringify(snap1.state[k]) !== JSON.stringify(snap2.state[k])
+            );
+            
+            if (addedKeys.length) console.log('➕ Added:', addedKeys);
+            if (removedKeys.length) console.log('➖ Removed:', removedKeys);
+            if (changedKeys.length) console.log('🔄 Changed:', changedKeys);
+            
+            console.groupEnd();
+        },
+        
+        getHistory() {
+            return snapshots;
+        }
     };
-    const callNow = immediate && !timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) func(...args);
-  };
 }
 
-// Throttle implementation
-function throttle(func, limit) {
-  let inThrottle;
-  return function(...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+const gameState = { player: { x: 0, y: 0, health: 100 }, score: 0, level: 1 };
+const inspector = createStateInspector(gameState, 'Game State');
+
+inspector.snapshot('Initial state');
+gameState.player.x = 10;
+gameState.player.y = 5;
+inspector.snapshot('After movement');
+gameState.score = 100;
+gameState.player.health = 90;
+inspector.snapshot('After scoring and damage');
+
+inspector.compare(0, 2);
+
+// Browser DevTools Integration
+console.log('\\n=== Browser DevTools Integration ===');
+
+// Console styling (Chrome/Firefox)
+console.log('%c🎨 Styled Console Output', 
+    'color: #ff6b6b; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);');
+
+console.log('%cSuccess: %cOperation completed successfully', 
+    'color: green; font-weight: bold;', 
+    'color: black; font-weight: normal;');
+
+console.log('%cError: %cSomething went wrong', 
+    'color: red; font-weight: bold;', 
+    'color: black; font-weight: normal;');
+
+// Console.dir() for object inspection
+const complexObject = {
+    name: 'Complex Object',
+    nested: {
+        level1: {
+            level2: {
+                data: [1, 2, 3, { deep: 'value' }]
+            }
+        }
+    },
+    methods: {
+        doSomething() { return 'done'; }
     }
-  };
-}
-
-// Example usage
-const expensiveOperation = () => {
-  console.log('Expensive operation executed');
-  // Simulate expensive computation
-  let sum = 0;
-  for (let i = 0; i < 100000; i++) {
-    sum += Math.random();
-  }
-  return sum;
 };
 
-const debouncedOperation = debounce(expensiveOperation, 300);
-const throttledOperation = throttle(expensiveOperation, 300);
+console.log('Regular log:', complexObject);
+console.dir(complexObject);
 
-// Function call optimization
-console.log('=== Function Optimization ===');
+// Performance marks and measures
+performance.mark('operation-start');
 
-function withFunctionCall() {
-  function add(a, b) {
-    return a + b;
-  }
-  let sum = 0;
-  for (let i = 0; i < 100000; i++) {
-    sum = add(sum, i);
-  }
-  return sum;
-}
-
-function withInlinedOperation() {
-  let sum = 0;
-  for (let i = 0; i < 100000; i++) {
-    sum = sum + i; // Inlined operation
-  }
-  return sum;
-}
-
-const functionBench = new Benchmark('Function Calls');
-functionBench.compare(withFunctionCall, withInlinedOperation, 'Function calls', 'Inlined operations');
-
-// Memory-efficient patterns
-console.log('=== Memory Efficiency ===');
-
-class ObjectPool {
-  constructor(createFn, resetFn, initialSize = 10) {
-    this.createFn = createFn;
-    this.resetFn = resetFn;
-    this.pool = [];
-    for (let i = 0; i < initialSize; i++) {
-      this.pool.push(this.createFn());
-    }
-  }
-
-  acquire() {
-    return this.pool.length > 0 ? this.pool.pop() : this.createFn();
-  }
-
-  release(obj) {
-    this.resetFn(obj);
-    this.pool.push(obj);
-  }
-}
-
-// Example: Point object pool
-class Point {
-  constructor(x = 0, y = 0) {
-    this.x = x;
-    this.y = y;
-  }
-
-  set(x, y) {
-    this.x = x;
-    this.y = y;
-    return this;
-  }
-}
-
-const pointPool = new ObjectPool(
-  () => new Point(),
-  (point) => point.set(0, 0),
-  100
-);
-
-function withObjectPool() {
-  const points = [];
-  // Acquire points from pool
-  for (let i = 0; i < 1000; i++) {
-    const point = pointPool.acquire();
-    point.set(Math.random() * 100, Math.random() * 100);
-    points.push(point);
-  }
-  // Use points
-  let sum = 0;
-  for (const point of points) {
-    sum += point.x + point.y;
-  }
-  // Return to pool
-  for (const point of points) {
-    pointPool.release(point);
-  }
-  return sum;
-}
-
-function withoutObjectPool() {
-  const points = [];
-  // Create new points each time
-  for (let i = 0; i < 1000; i++) {
-    const point = new Point(Math.random() * 100, Math.random() * 100);
-    points.push(point);
-  }
-  // Use points
-  let sum = 0;
-  for (const point of points) {
-    sum += point.x + point.y;
-  }
-  return sum;
-}
-
-const poolBench = new Benchmark('Object Creation');
-poolBench.compare(withObjectPool, withoutObjectPool, 'Object Pool', 'New Objects');
-
-// Lazy loading pattern
-console.log('=== Lazy Loading ===');
-
-class LazyValue {
-  constructor(factory) {
-    this.factory = factory;
-    this.computed = false;
-    this.value = null;
-  }
-
-  get() {
-    if (!this.computed) {
-      console.log('Computing lazy value...');
-      this.value = this.factory();
-      this.computed = true;
-    }
-    return this.value;
-  }
-}
-
-// Expensive computation
-const lazyExpensiveValue = new LazyValue(() => {
-  let result = 0;
-  for (let i = 0; i < 1000000; i++) {
-    result += Math.sqrt(i);
-  }
-  return result;
-});
-
-console.log('Lazy value created (not computed yet)');
-console.log('First access:', lazyExpensiveValue.get());
-console.log('Second access (cached):', lazyExpensiveValue.get());
-
-// Memoization for performance
-function memoize(fn) {
-  const cache = new Map();
-  return function memoized(...args) {
-    const key = JSON.stringify(args);
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    const result = fn.apply(this, args);
-    cache.set(key, result);
-    return result;
-  };
-}
-
-// Fibonacci example
-function fibonacci(n) {
-  if (n < 2) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-const memoizedFibonacci = memoize(fibonacci);
-
-console.time('Regular fibonacci(35)');
-fibonacci(35);
-console.timeEnd('Regular fibonacci(35)');
-
-console.time('Memoized fibonacci(35)');
-memoizedFibonacci(35);
-console.timeEnd('Memoized fibonacci(35)');
-
-console.time('Memoized fibonacci(35) - second call');
-memoizedFibonacci(35);
-console.timeEnd('Memoized fibonacci(35) - second call');
-
-// Code splitting simulation
-console.log('=== Code Splitting ===');
-
-class ModuleLoader {
-  constructor() {
-    this.modules = new Map();
-  }
-
-  async loadModule(name, factory) {
-    if (this.modules.has(name)) {
-      return this.modules.get(name);
-    }
-    console.log(\`Loading module: \${name}\`);
-    const module = await factory();
-    this.modules.set(name, module);
-    return module;
-  }
-}
-
-const loader = new ModuleLoader();
-
-// Simulate dynamic import
-async function loadChartModule() {
-  return {
-    createChart: (data) => \`Chart with \${data.length} data points\`,
-    chartTypes: ['line', 'bar', 'pie']
-  };
-}
-
-async function loadUtilsModule() {
-  return {
-    formatNumber: (n) => n.toLocaleString(),
-    debounce: debounce,
-    throttle: throttle
-  };
-}
-
-// Usage
-async function useModules() {
-  const chartModule = await loader.loadModule('chart', loadChartModule);
-  const utilsModule = await loader.loadModule('utils', loadUtilsModule);
-  console.log('Chart module loaded:', chartModule.chartTypes);
-  console.log('Utils module loaded:', utilsModule.formatNumber(1234567));
-}
-
-useModules();
-
-// Performance monitoring
-class PerformanceMonitor {
-  constructor() {
-    this.metrics = new Map();
-    this.observers = [];
-  }
-
-  startTiming(label) {
-    this.metrics.set(label, { start: performance.now() });
-  }
-
-  endTiming(label) {
-    const metric = this.metrics.get(label);
-    if (metric) {
-      metric.end = performance.now();
-      metric.duration = metric.end - metric.start;
-      this.notifyObservers(label, metric);
-    }
-  }
-
-  addObserver(callback) {
-    this.observers.push(callback);
-  }
-
-  notifyObservers(label, metric) {
-    this.observers.forEach(observer => observer(label, metric));
-  }
-
-  getMetrics() {
-    return new Map(this.metrics);
-  }
-}
-
-const monitor = new PerformanceMonitor();
-monitor.addObserver((label, metric) => {
-  if (metric.duration > 100) {
-    console.warn(\`Performance warning: \${label} took \${metric.duration.toFixed(2)}ms\`);
-  }
-});
-
-// Example usage
-monitor.startTiming('data-processing');
 // Simulate some work
+let sum = 0;
 for (let i = 0; i < 1000000; i++) {
-  Math.sqrt(i);
+    sum += i;
 }
-monitor.endTiming('data-processing');
 
-console.log('Performance optimization examples completed');
-`,
+performance.mark('operation-end');
+performance.measure('operation-duration', 'operation-start', 'operation-end');
+
+// Get performance data
+const measures = performance.getEntriesByType('measure');
+if (measures.length > 0) {
+    console.log('Performance measure:', measures[measures.length - 1]);
+}
+
+// Debugging Best Practices Examples
+console.log('\\n=== Debugging Best Practices ===');
+
+// 1. Defensive programming with assertions
+function divide(a, b) {
+    console.assert(typeof a === 'number', 'First parameter must be a number', a);
+    console.assert(typeof b === 'number', 'Second parameter must be a number', b);
+    console.assert(b !== 0, 'Division by zero is not allowed', { a, b });
+    
+    return a / b;
+}
+
+// 2. Informative error messages
+class ValidationError extends Error {
+    constructor(field, value, rule) {
+        super(\`Validation failed for field "\${field}": \${rule}\`);
+        this.name = 'ValidationError';
+        this.field = field;
+        this.value = value;
+        this.rule = rule;
+    }
+}
+
+function validateUser(user) {
+    if (!user.email || !user.email.includes('@')) {
+        throw new ValidationError('email', user.email, 'must contain @ symbol');
+    }
+    
+    if (!user.age || user.age < 18) {
+        throw new ValidationError('age', user.age, 'must be 18 or older');
+    }
+    
+    return true;
+}
+
+try {
+    validateUser({ email: 'invalid-email', age: 16 });
+} catch (error) {
+    if (error instanceof ValidationError) {
+        console.error(\`Validation Error in \${error.field}: \${error.message}\`);
+    }
+}
+
+// 3. Debugging complex data structures
+const nestedData = {
+    users: [
+        { id: 1, profile: { name: 'Alice', settings: { theme: 'dark' } } },
+        { id: 2, profile: { name: 'Bob', settings: { theme: 'light' } } }
+    ],
+    metadata: { version: '1.0', timestamp: Date.now() }
+};
+
+// Pretty print with JSON.stringify
+console.log('Formatted object:', JSON.stringify(nestedData, null, 2));
+
+// Extract specific paths for debugging
+function getNestedValue(obj, path) {
+    const keys = path.split('.');
+    let current = obj;
+    
+    for (const key of keys) {
+        if (current && typeof current === 'object' && key in current) {
+            current = current[key];
+        } else {
+            console.warn(\`Path "\${path}" not found at key "\${key}"\`);
+            return undefined;
+        }
+    }
+    
+    return current;
+}
+
+console.log('Theme for user 1:', getNestedValue(nestedData, 'users.0.profile.settings.theme'));
+console.log('Invalid path:', getNestedValue(nestedData, 'users.0.invalid.path'));
+
+// 4. Conditional debugging
+const DEBUG = true; // Set to false in production
+
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log('🐛 DEBUG:', ...args);
+    }
+}
+
+function debugGroup(label, fn) {
+    if (DEBUG) {
+        console.group(\`🐛 DEBUG: \${label}\`);
+        fn();
+        console.groupEnd();
+    } else {
+        fn();
+    }
+}
+
+debugLog('This will only show when DEBUG is true');
+debugGroup('User Processing', () => {
+    debugLog('Processing user data...');
+    debugLog('Validation complete');
+});
+
+// Real-world Debugging Scenarios
+console.log('\\n=== Real-world Debugging Scenarios ===');
+
+// 1. API debugging wrapper
+function createAPIDebugger(baseURL) {
+    return {
+        async request(endpoint, options = {}) {
+            const url = baseURL + endpoint;
+            const requestId = 'req_' + Date.now();
+            
+            console.group(\`🌐 API Request [\${requestId}]\`);
+            console.log('URL:', url);
+            console.log('Options:', options);
+            
+            try {
+                console.time(\`Request \${requestId}\`);
+                
+                // Simulate fetch
+                const response = await new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve({
+                            ok: Math.random() > 0.3,
+                            status: Math.random() > 0.3 ? 200 : 500,
+                            data: { id: 1, result: 'success' }
+                        });
+                    }, Math.random() * 1000);
+                });
+                
+                console.timeEnd(\`Request \${requestId}\`);
+                console.log('Response:', response);
+                
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}\`);
+                }
+                
+                return response.data;
+                
+            } catch (error) {
+                console.error('Request failed:', error);
+                throw error;
+            } finally {
+                console.groupEnd();
+            }
+        }
+    };
+}
+
+const api = createAPIDebugger('https://api.example.com');
+
+// 2. React-style component debugging
+function createComponentDebugger(componentName) {
+    let renderCount = 0;
+    
+    return {
+        logRender(props, state) {
+            renderCount++;
+            console.group(\`🎭 \${componentName} Render #\${renderCount}\`);
+            console.log('Props:', props);
+            console.log('State:', state);
+            console.groupEnd();
+        },
+        
+        logEffect(effectName, dependencies) {
+            console.log(\`⚡ \${componentName} Effect: \${effectName}\`, dependencies);
+        },
+        
+        getRenderCount() {
+            return renderCount;
+        }
+    };
+}
+
+const componentDebugger = createComponentDebugger('UserProfile');
+componentDebugger.logRender({ userId: 1 }, { loading: false });
+componentDebugger.logEffect('fetchUser', [1]);
+
+console.log('Total renders:', componentDebugger.getRenderCount());
+
+// 3. Event debugging
+function createEventDebugger() {
+    const events = [];
+    
+    return {
+        log(eventType, data, source = 'unknown') {
+            const event = {
+                type: eventType,
+                data,
+                source,
+                timestamp: Date.now(),
+                id: events.length + 1
+            };
+            
+            events.push(event);
+            console.log(\`📡 Event [\${event.id}] \${eventType} from \${source}:\`, data);
+        },
+        
+        getEvents(filter) {
+            if (!filter) return events;
+            
+            return events.filter(event => {
+                if (filter.type && event.type !== filter.type) return false;
+                if (filter.source && event.source !== filter.source) return false;
+                if (filter.since && event.timestamp < filter.since) return false;
+                return true;
+            });
+        },
+        
+        clear() {
+            events.length = 0;
+            console.log('📡 Event log cleared');
+        }
+    };
+}
+
+const eventDebugger = createEventDebugger();
+eventDebugger.log('user:login', { userId: 1 }, 'auth-service');
+eventDebugger.log('page:view', { path: '/dashboard' }, 'router');
+eventDebugger.log('user:action', { action: 'click', element: 'button' }, 'ui');
+
+console.table(eventDebugger.getEvents({ type: 'user:login' }));
+
+console.log('\\n=== Debugging Tips Summary ===');
+console.log('1. Use console.table() for arrays and objects');
+console.log('2. Use console.group() to organize related logs');
+console.log('3. Use console.time() for performance measurement');
+console.log('4. Use debugger statement for breakpoints');
+console.log('5. Create custom error classes with context');
+console.log('6. Use console.assert() for defensive programming');
+console.log('7. Implement conditional debugging for production');
+console.log('8. Track function calls and performance');
+console.log('9. Use performance marks for timing');
+console.log('10. Create debugging wrappers for APIs and components');
+
+console.log('Debugging examples completed');`,
+
   exercises: [
     {
-      question: "Create a memoization function that has a maximum cache size and removes oldest entries:",
-      solution: `function memoizeWithLimit(fn, maxSize = 100) {
-  const cache = new Map();
+      question: "Create a debugging utility that tracks all function calls in an object with timing and arguments:",
+      solution: `function createObjectDebugger(obj, objectName = 'Object') {
+  const calls = [];
+  const debuggedObj = {};
   
-  return function memoized(...args) {
-    const key = JSON.stringify(args);
-    
-    if (cache.has(key)) {
-      // Move to end (most recently used)
-      const value = cache.get(key);
-      cache.delete(key);
-      cache.set(key, value);
-      return value;
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'function') {
+      debuggedObj[key] = function(...args) {
+        const startTime = performance.now();
+        const callId = \`\${objectName}.\${key}_\${Date.now()}\`;
+        
+        console.log(\`🔍 [\${callId}] Called \${objectName}.\${key}(\`, ...args, ')')
+        
+        try {
+          const result = value.apply(this, args);
+          const duration = performance.now() - startTime;
+          
+          calls.push({ method: key, args, result, duration, success: true });
+          console.log(\`✅ [\${callId}] Completed in \${duration.toFixed(2)}ms:\`, result);
+          
+          return result;
+        } catch (error) {
+          const duration = performance.now() - startTime;
+          calls.push({ method: key, args, error: error.message, duration, success: false });
+          console.error(\`❌ [\${callId}] Failed in \${duration.toFixed(2)}ms:\`, error);
+          throw error;
+        }
+      };
+    } else {
+      debuggedObj[key] = value;
     }
-    
-    // Remove oldest if at limit
-    if (cache.size >= maxSize) {
-      const firstKey = cache.keys().next().value;
-      cache.delete(firstKey);
-    }
-    
-    const result = fn.apply(this, args);
-    cache.set(key, result);
-    return result;
-  };
-}`,
-      explanation: "Use a Map to track insertion order and implement LRU (Least Recently Used) cache eviction."
+  }
+  
+  debuggedObj._getDebugInfo = () => calls;
+  return debuggedObj;
+}`
     }
   ],
+
   quiz: [
     {
-      question: "Which array iteration method is generally fastest for simple operations?",
+      question: "What is the primary purpose of console.assert()?",
       options: [
-        "forEach()",
-        "map()",
-        "for loop",
-        "for...of loop"
+        "To stop execution like the debugger statement",
+        "To log a message only if a condition is false",
+        "To measure the time an operation takes",
+        "To print a stack trace"
       ],
-      correct: 2,
-      explanation: "Traditional for loops are usually fastest because they have less function call overhead."
+      correct: 1,
+      explanation: "console.assert() logs an error message to the console if its first argument is false, making it useful for checking invariants."
     }
   ],
+
   resources: [
     {
-      title: "Web Performance - MDN",
-      url: "https://developer.mozilla.org/en-US/docs/Web/Performance"
+      title: "MDN Console Documentation",
+      url: "https://developer.mozilla.org/en-US/docs/Web/API/console"
+    },
+    {
+      title: "Chrome DevTools Debugging Guide",
+      url: "https://developer.chrome.com/docs/devtools/javascript/"
     }
   ],
-  nextModules: ['debugging', 'testing'],
-  prerequisites: ['functions-basics', 'arrays-objects']
+
+  nextModules: ['performance', 'best-practices'],
+  prerequisites: ['functions-basics', 'error-handling-basics', 'async-await']
 };
