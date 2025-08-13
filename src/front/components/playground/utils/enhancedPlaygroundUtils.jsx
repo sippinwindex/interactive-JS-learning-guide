@@ -1,6 +1,6 @@
 // src/front/components/playground/EnhancedPlayground.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import EnhancedMonacoEditor from './EnhancedMonacoEditor';
+import EnhancedMonacoEditor from "../EnhancedMonacoEditor";
 import FileExplorer from './FileExplorer';
 import { defineEditorThemes } from './themes/editorThemes';
 import { 
